@@ -361,3 +361,32 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+/Assets/AntLR
+/Assets/StreamingAssets
+/Assets/Scripts
+/Assets/Scenes
+/Assets/Resources
+/Assets/Prefabs
+/Assets/Plugins
+/Assets/MRTK/Shaders
+/Assets/MixedRealityToolkit.Generated
+/Assets/Materials
+/Assets/ECAScripts
+/TestUnity2022.sln
+/Assembly-CSharp.csproj
+/Assembly-CSharp-firstpass.csproj
+/Assembly-CSharp-Editor.csproj
+/UserSettings
+/UIElementsSchema
+/Temp
+/ProjectSettings
+/Library
+/Assets/XRRaycastPointer.cs
+/Assets/XRI/Settings
+/Assets/XR
+/Assets/VRKeyboard.cs
+/Assets/UIManager.cs
+/Assets/UI
+/Assets/TextMesh Pro
+/Assets/ECAObjectXRLoader.cs
+/Assets/TestUI1/Example/Editor

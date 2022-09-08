@@ -1,0 +1,26 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="True">
+    <Style src="project://database/Assets/TestUI1/Test/Editor/SequenceTreeView.uss?fileID=7433441132597879392&amp;guid=ffc9f48c1da3b8645979cb759602e9ab&amp;type=3#SequenceTreeView" />
+    <SplitView orientation="Vertical" fixed-pane-initial-dimension="250" name="SplitView">
+        <ui:VisualElement name="TreeViewContainer">
+            <uie:Toolbar name="TreeViewToolbar" style="background-color: rgb(60, 60, 60);">
+                <uie:ToolbarMenu tabindex="-1" display-tooltip-when-elided="false" text="Add Node" name="AddNodeMenu" />
+            </uie:Toolbar>
+            <ui:TreeView fixed-item-height="20" name="TreeView" style="background-color: rgb(48, 48, 48); flex-grow: 1;" />
+        </ui:VisualElement>
+        <ui:VisualElement name="RuleInspectorContainer">
+            <uie:Toolbar name="RuleInspectorToolbar">
+                <uie:ToolbarMenu tabindex="-1" display-tooltip-when-elided="true" text="+" name="AddMenu" style="font-size: 26px;" />
+                <uie:ToolbarSpacer name="Spacer" style="flex-grow: 1;" />
+                <uie:ToolbarButton tabindex="-1" text="Discard" display-tooltip-when-elided="true" name="DiscardButton" />
+                <uie:ToolbarButton tabindex="-1" text="Save" display-tooltip-when-elided="true" name="SaveButton" style="border-right-width: 1px; border-left-width: 0;" />
+            </uie:Toolbar>
+            <ui:VisualElement name="RuleInspector">
+                <ui:Button tabindex="0" text="Button" display-tooltip-when-elided="true" name="Button" />
+                <ui:VisualElement name="VisualElement" class="node-container">
+                    <ui:Label text="Parallel Execution" name="Label" class="node-label" />
+                    <ui:TextField picking-mode="Ignore" is-delayed="true" class="node-text-field" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </SplitView>
+</ui:UXML>
