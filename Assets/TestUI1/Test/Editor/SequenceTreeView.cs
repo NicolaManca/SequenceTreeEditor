@@ -1,52 +1,10 @@
-using Codice.CM.Client.Differences;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Security.Permissions;
 using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
-using UnityEngine.Rendering;
 using UnityEngine.UIElements;
-using static Codice.Client.BaseCommands.StatusChangeInfo;
-
-public class NodeName : VisualElement
-{
-    public static readonly string ussNodeContainer = "node-container";
-    public static readonly string ussNodeLabel = "node-label";
-    public static readonly string ussHiddenElement = "element_hidden";
-    public static readonly string ussNodeTextField = "node-text-field";
-
-    public int id;
-    public Label prefix;
-    public Label label;
-    public TextField textField;
-
-    public NodeName()
-    {
-        AddToClassList(ussNodeContainer);
-        prefix = new Label() { name = "Prefix" };
-        prefix.AddToClassList(ussNodeLabel);
-        label = new Label() { name = "NodeName" };
-        label.AddToClassList(ussNodeLabel);
-        textField = new TextField() { name = "TextField"};
-        textField.AddToClassList(ussNodeTextField);
-        textField.isDelayed = true;
-        textField.focusable = true;
-        textField.delegatesFocus = true;
-        textField.selectAllOnFocus = true;
-        textField.AddToClassList(ussHiddenElement);
-
-
-        //textField.RegisterValueChangedCallback(evt => { UpdateNodeName(evt, this); });
-        //(element as NodeName).textField.RegisterCallback<FocusOutEvent>(evt => { UpdateNodeName(this); });
-
-        Add(prefix);
-        Add(label);
-        Add(textField);
-    }
-}
 
 
 
@@ -54,7 +12,7 @@ public class SequenceTreeView : NodesWindow
 {
     public static readonly string ussNodeContainer = "node-container";
     public static readonly string ussNodeLabel = "node-label";
-    public static readonly string ussNodeTextField = "node-text-field";
+    public static readonly string ussNameChangerButton = "icon-button";
 
     private TreeView m_TreeView;
     private VisualElement m_RuleInspectorContainer;
@@ -90,7 +48,7 @@ public class SequenceTreeView : NodesWindow
         // Set TreeView.makeItem to initialize each node in the tree.
         m_TreeView.makeItem = () =>
         {
-            VisualElement container = new() { name = "container", focusable = true };
+            VisualElement container = new() { name = "container" };
             container.AddToClassList(ussNodeContainer);
 
             Label prefix = new() { name = "prefix" };
@@ -99,37 +57,43 @@ public class SequenceTreeView : NodesWindow
             Label nodeName = new() { name = "nodeName" };
             nodeName.AddToClassList(ussNodeLabel);
 
-            TextField textField = new()
-            {
-                name = "textfield",
-                isDelayed = true,
-                focusable = true,
-                delegatesFocus = true,
+            UnityEngine.UIElements.Button button = new() {
+                name = "button",
+                style =
+                {
+                    paddingLeft = new StyleLength(3),
+                    paddingRight = new StyleLength(3)
+                }
             };
-            textField.AddToClassList(ussNodeTextField);
-            textField.style.display = DisplayStyle.None;
+            button.Add(new Image
+            {
+                sprite = Resources.Load<Sprite>("EditIcon"),
+                scaleMode = ScaleMode.ScaleToFit,
+                style =
+                {
+                    width = 20,
+                    marginTop = new StyleLength(StyleKeyword.Auto),
+                    marginBottom = new StyleLength(StyleKeyword.Auto)
+                }
+            });
 
-            textField.RegisterValueChangedCallback(e => UpdateNodeName(e, container));
-            textField.RegisterCallback<FocusOutEvent>(e => UpdateNodeName(container));
 
             container.Add(prefix);
             container.Add(nodeName);
-            container.Add(textField);
+            container.Add(button);
             return container;
         };
 
         // Set TreeView.bindItem to bind an initialized node to a data item.
         m_TreeView.bindItem = (VisualElement element, int index) =>
         {
-            //Debug.Log($"Label: {(element as NodeName).id}, Node Name: {m_TreeView.GetItemDataForIndex<INode>(index).Id}");
-            element.userData = index;
+            Debug.Log($"index: {index}, element.userData: {element}");
             var node = m_TreeView.GetItemDataForIndex<INode>(index);
             element.Q<Label>("prefix").text = node.Prefix;
             element.Q<Label>("nodeName").text = node.Name;
         };
 
 
-        //m_TreeView.onItemsChosen += EditNodeNode;
         m_TreeView.onSelectionChange += UpdateRuleEditorStatus;
 
 
@@ -178,6 +142,7 @@ public class SequenceTreeView : NodesWindow
         var selection = obj.First() as INode;
         if (selection.GetType() != typeof(Leaf))
         {
+
             m_RuleInspectorContainer.SetEnabled(false);
             return;
         }

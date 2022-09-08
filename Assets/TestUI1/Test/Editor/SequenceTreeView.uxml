@@ -1,6 +1,6 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="True">
     <Style src="project://database/Assets/TestUI1/Test/Editor/SequenceTreeView.uss?fileID=7433441132597879392&amp;guid=ffc9f48c1da3b8645979cb759602e9ab&amp;type=3#SequenceTreeView" />
-    <SplitView orientation="Vertical" fixed-pane-initial-dimension="250" name="SplitView">
+    <SplitView orientation="Vertical" fixed-pane-initial-dimension="171" name="SplitView">
         <ui:VisualElement name="TreeViewContainer">
             <uie:Toolbar name="TreeViewToolbar" style="background-color: rgb(60, 60, 60);">
                 <uie:ToolbarMenu tabindex="-1" display-tooltip-when-elided="false" text="Add Node" name="AddNodeMenu" />
@@ -18,7 +18,6 @@
                 <ui:Button tabindex="0" text="Button" display-tooltip-when-elided="true" name="Button" />
                 <ui:VisualElement name="VisualElement" class="node-container">
                     <ui:Label text="Parallel Execution" name="Label" class="node-label" />
-                    <ui:TextField picking-mode="Ignore" is-delayed="true" class="node-text-field" />
                 </ui:VisualElement>
             </ui:VisualElement>
         </ui:VisualElement>

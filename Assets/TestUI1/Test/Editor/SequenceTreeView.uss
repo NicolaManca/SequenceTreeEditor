@@ -12,11 +12,3 @@
     flex-direction: row;
     flex-grow: 1;
 }
-
-.element_hidden {
-    display: none;
-}
-
-.node-text-field {
-    min-width: 20%;
-}
