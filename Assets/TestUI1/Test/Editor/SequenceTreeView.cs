@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
@@ -7,13 +6,13 @@ using UnityEngine;
 using UnityEngine.UIElements;
 
 
-
 public class SequenceTreeView : NodesWindow
 {
     public static readonly string ussNodeContainer = "node-container";
     public static readonly string ussNodeLabel = "node-label";
-    public static readonly string ussNameChangerButton = "icon-button";
+    public static readonly string ussNodeTextField = "node-text-field";
 
+    private int m_Id = 1;
     private TreeView m_TreeView;
     private VisualElement m_RuleInspectorContainer;
 
@@ -32,7 +31,7 @@ public class SequenceTreeView : NodesWindow
         treeTbMenu.menu.AppendAction("Add Sequence Node", a => { AddNodeToSelection("sequence"); }, UpdateActionMenuStatus);
         treeTbMenu.menu.AppendAction("Add Parallel Node", a => { AddNodeToSelection("parallel"); }, UpdateActionMenuStatus);
         treeTbMenu.menu.AppendAction("Add Leaf Node", a => { AddNodeToSelection("leaf"); }, UpdateActionMenuStatus);
-        
+
         var ruleInspTbMenu = rootVisualElement.Q<ToolbarMenu>("AddMenu");
         var ruleInspDiscardB = rootVisualElement.Q<ToolbarButton>("DiscardButton");
         var ruleInspSaveB = rootVisualElement.Q<ToolbarButton>("SaveButton");
@@ -48,8 +47,9 @@ public class SequenceTreeView : NodesWindow
         // Set TreeView.makeItem to initialize each node in the tree.
         m_TreeView.makeItem = () =>
         {
-            VisualElement container = new() { name = "container" };
+            VisualElement container = new() { name = "container", focusable = true };
             container.AddToClassList(ussNodeContainer);
+            
 
             Label prefix = new() { name = "prefix" };
             prefix.AddToClassList(ussNodeLabel);
@@ -57,45 +57,47 @@ public class SequenceTreeView : NodesWindow
             Label nodeName = new() { name = "nodeName" };
             nodeName.AddToClassList(ussNodeLabel);
 
-            UnityEngine.UIElements.Button button = new() {
-                name = "button",
-                style =
-                {
-                    paddingLeft = new StyleLength(3),
-                    paddingRight = new StyleLength(3)
-                }
-            };
-            button.Add(new Image
+            TextField textField = new()
             {
-                sprite = Resources.Load<Sprite>("EditIcon"),
-                scaleMode = ScaleMode.ScaleToFit,
-                style =
-                {
-                    width = 20,
-                    marginTop = new StyleLength(StyleKeyword.Auto),
-                    marginBottom = new StyleLength(StyleKeyword.Auto)
-                }
-            });
+                name = "textfield",
+                isDelayed = true,
+                focusable = true,
+                delegatesFocus = true,
+            };
+            textField.AddToClassList(ussNodeTextField);
+            textField.style.display = DisplayStyle.None;
+
+            textField.RegisterValueChangedCallback(e => UpdateNodeName(e, container));
+            textField.RegisterCallback<FocusOutEvent>(e => UpdateNodeName(container));
+
 
 
             container.Add(prefix);
             container.Add(nodeName);
-            container.Add(button);
+            container.Add(textField);
             return container;
         };
 
         // Set TreeView.bindItem to bind an initialized node to a data item.
         m_TreeView.bindItem = (VisualElement element, int index) =>
         {
-            Debug.Log($"index: {index}, element.userData: {element}");
+            //Debug.Log($"Label: {(element as NodeName).id}, Node Name: {m_TreeView.GetItemDataForIndex<INode>(index).Id}");
+            element.userData = index;
             var node = m_TreeView.GetItemDataForIndex<INode>(index);
             element.Q<Label>("prefix").text = node.Prefix;
             element.Q<Label>("nodeName").text = node.Name;
         };
 
+        m_TreeView.destroyItem = (VisualElement element) =>
+        {
+            Debug.Log($"Destroyed: {element.userData}");
+        };
 
+
+
+        m_TreeView.onItemsChosen += EditNodeNode;
         m_TreeView.onSelectionChange += UpdateRuleEditorStatus;
-
+        m_TreeView.RegisterCallback<KeyDownEvent>(evt => { if (evt.keyCode == KeyCode.Delete) DeleteItemNode(); } );
 
         m_RuleInspectorContainer = rootVisualElement.Q<VisualElement>("RuleInspectorContainer");
         m_RuleInspectorContainer.SetEnabled(false);
@@ -105,21 +107,27 @@ public class SequenceTreeView : NodesWindow
 
     }
 
+    private void DeleteItemNode()
+    {
+        var selection = m_TreeView.selectedItem as INode;
+        if (selection.Id == 1) return;
+        m_TreeView.TryRemoveItem(selection.Id);
+    }
 
     private void UpdateNodeName(ChangeEvent<string> evt, VisualElement container)
     {
         var node = m_TreeView.GetItemDataForIndex<INode>((int)container.userData);
-        container.Q<Label>("nodeName").text = evt.newValue;
         node.Name = evt.newValue;
         container.Q<TextField>("textfield").style.display = DisplayStyle.None;
+        m_TreeView.RefreshItems();
     }
     private void UpdateNodeName(VisualElement container)
     {
         var textField = container.Q<TextField>("textfield");
         var node = m_TreeView.GetItemDataForIndex<INode>((int)container.userData);
-        container.Q<Label>("nodeName").text = textField.value;
         node.Name = textField.value;
         textField.style.display = DisplayStyle.None;
+        m_TreeView.RefreshItems();
     }
 
     private void EditNodeNode(IEnumerable<object> obj)
@@ -131,8 +139,12 @@ public class SequenceTreeView : NodesWindow
         var textField = itemNode.Q<TextField>("textfield");
         textField.style.display = DisplayStyle.Flex;
         textField.SetValueWithoutNotify(selection.Name);
-        
-        rootVisualElement.schedule.Execute(() => { textField.Focus(); });
+
+        Debug.Log($"focus from root? {rootVisualElement.focusController.focusedElement == textField}");
+        Debug.Log($"focus from textField? {textField.focusController.focusedElement == textField}");
+        //rootVisualElement.schedule.Execute(() => { textField.Focus(); });
+        Debug.Log($"focus from root? {rootVisualElement.focusController.focusedElement == textField}");
+        Debug.Log($"focus from textField? {textField.focusController.focusedElement == textField}");
     }
 
 
@@ -142,7 +154,6 @@ public class SequenceTreeView : NodesWindow
         var selection = obj.First() as INode;
         if (selection.GetType() != typeof(Leaf))
         {
-
             m_RuleInspectorContainer.SetEnabled(false);
             return;
         }
@@ -176,13 +187,13 @@ public class SequenceTreeView : NodesWindow
     public void AddNodeToSelection(string nodeType)
     {
         INode node;
-        int id = m_TreeView.GetTreeCount() + 1;
         var selectionCollection = m_TreeView.GetSelectedItems<INode>();
         if (selectionCollection.Count() > 0)
         {
+            int id = ++m_Id;
             var selection = selectionCollection.First();
             string prefix = selection.data.Prefix == "R." ? "" : selection.data.Prefix;
-            prefix += $"{selection.children.Count()+1}.";
+            prefix += $"{selection.children.Count() + 1}.";
 
             if (nodeType == "leaf") node = new Leaf(id, "No Rule", prefix);
             else node = new Internal(id, InternalNodeNames[nodeType], prefix);
