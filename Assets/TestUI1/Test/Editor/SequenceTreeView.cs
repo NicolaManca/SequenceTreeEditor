@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Drawing.Design;
 using System.Linq;
@@ -59,22 +60,10 @@ public class SequenceTreeView : NodesWindow
             Label nodeName = new() { name = "nodeName" };
             nodeName.AddToClassList(ussNodeLabel);
 
-            TextField textField = new()
-            {
-                name = "textfield",
-                isDelayed = true,
-                focusable = true,
-                delegatesFocus = true,
-            };
-            textField.AddToClassList(ussNodeTextField);
-            textField.style.display = DisplayStyle.None;
-
-            textField.RegisterValueChangedCallback(e => UpdateNodeName(e, container));
-
+            container.AddManipulator(new ContextualMenuManipulator(evt => { BuildContextualMenu(evt, container); }));
 
             container.Add(prefix);
             container.Add(nodeName);
-            container.Add(textField);
             return container;
         };
 
@@ -94,8 +83,6 @@ public class SequenceTreeView : NodesWindow
         };
 
 
-
-        m_TreeView.onItemsChosen += EditNodeNode;
         m_TreeView.onSelectionChange += UpdateRuleEditorStatus;
         m_TreeView.RegisterCallback<KeyDownEvent>(evt => { if (evt.keyCode == KeyCode.Delete) DeleteItemNode(); } );
 
@@ -107,6 +94,14 @@ public class SequenceTreeView : NodesWindow
 
     }
 
+    private void BuildContextualMenu(ContextualMenuPopulateEvent evt, VisualElement container)
+    {
+        var node = m_TreeView.GetItemDataForIndex<INode>((int)container.userData);
+        if (node.GetType() == typeof(Leaf)) return;
+        evt.menu.AppendAction(InternalNodeNames["sequence"], a => { UpdateNodeName(InternalNodeNames["sequence"], container); }, DropdownMenuAction.AlwaysEnabled);
+        evt.menu.AppendAction(InternalNodeNames["parallel"], a => { UpdateNodeName(InternalNodeNames["parallel"], container); }, DropdownMenuAction.AlwaysEnabled);
+    }
+
     private void DeleteItemNode()
     {
         var selection = m_TreeView.selectedItem as INode;
@@ -114,36 +109,13 @@ public class SequenceTreeView : NodesWindow
         m_TreeView.TryRemoveItem(selection.Id);
     }
 
-    private void UpdateNodeName(ChangeEvent<string> evt, VisualElement container)
+    private void UpdateNodeName(string newName, VisualElement container)
     {
         var node = m_TreeView.GetItemDataForIndex<INode>((int)container.userData);
-        node.Name = evt.newValue;
-        container.Q<TextField>("textfield").style.display = DisplayStyle.None;
-        m_TreeView.RefreshItems();
-    }
-    private void UpdateNodeName(VisualElement container)
-    {
-        var textField = container.Q<TextField>("textfield");
-        var node = m_TreeView.GetItemDataForIndex<INode>((int)container.userData);
-        node.Name = textField.value;
-        textField.style.display = DisplayStyle.None;
+        node.Name = newName;
         m_TreeView.RefreshItems();
     }
 
-    private void EditNodeNode(IEnumerable<object> obj)
-    {
-        var selection = obj.First() as INode;
-        if (selection.GetType() == typeof(Leaf)) return;
-        int selectionIndex = m_TreeView.selectedIndex;
-        var itemNode = m_TreeView.Q<VisualElement>("unity-content-container").ElementAt(selectionIndex).Q<VisualElement>("container");
-        var textField = itemNode.Q<TextField>("textfield");
-        textField.style.display = DisplayStyle.Flex;
-        textField.SetValueWithoutNotify(selection.Name);
-
-        rootVisualElement.schedule.Execute(() => { 
-            textField.Focus();
-        });
-    }
 
     private void UpdateRuleEditorStatus(IEnumerable<object> obj)
     {
