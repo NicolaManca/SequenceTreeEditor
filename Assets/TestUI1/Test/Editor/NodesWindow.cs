@@ -18,13 +18,18 @@ public class NodesWindow : EditorWindow
     // Nested interface that can be either a single planet or a group of planets.
     protected interface INode
     {
+        public int ParentId
+        {
+            get;
+            set;
+        }
         public int Id
         {
             get;
             set;
         }
 
-        public string Prefix
+        public int Prefix
         {
             get;
             set;
@@ -40,12 +45,17 @@ public class NodesWindow : EditorWindow
     // Nested class that represents a planet.
     protected class Leaf : INode
     {
+        public int ParentId
+        {
+            get;
+            set;
+        }
         public int Id
         {
             get;
             set;
         }
-        public string Prefix
+        public int Prefix
         {
             get;
             set;
@@ -62,7 +72,7 @@ public class NodesWindow : EditorWindow
             set;
         }
 
-        public Leaf(int id, string name, string prefix = "", Rule rule = null)
+        public Leaf(int id, string name, int prefix = -1, Rule rule = null)
         {
             this.Id = id;
             this.Name = name;
@@ -74,12 +84,17 @@ public class NodesWindow : EditorWindow
     // Nested class that represents a group of planets.
     protected class Internal : INode
     {
+        public int ParentId
+        {
+            get;
+            set;
+        }
         public int Id
         {
             get;
             set;
         }
-        public string Prefix
+        public int Prefix
         {
             get;
             set;
@@ -89,7 +104,9 @@ public class NodesWindow : EditorWindow
             get;
             set;
         }
-        public Internal(int id, string name, string prefix = "")
+        public List<int> childrenIds = new List<int>();
+
+        public Internal(int id, string name, int prefix = -1)
         {
             this.Id = id;
             this.Name = name;
@@ -102,8 +119,8 @@ public class NodesWindow : EditorWindow
     {
         get
         {
-            var root = new Internal(1, InternalNodeNames["parallel"], "R.");
-            var roots = new List<TreeViewItemData<INode>> { new TreeViewItemData<INode>(1, root) };
+            var root = new Internal(0, InternalNodeNames["parallel"], 0) { ParentId = -1 };
+            var roots = new List<TreeViewItemData<INode>> { new TreeViewItemData<INode>(0, root) };
             return roots;
         }
     }

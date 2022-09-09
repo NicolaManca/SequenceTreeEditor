@@ -1,21 +1,18 @@
 using System;
 using System.Collections.Generic;
-using System.Drawing.Design;
 using System.Linq;
 using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
-using static UnityEngine.Rendering.DebugUI;
 
 
 public class SequenceTreeView : NodesWindow
 {
     public static readonly string ussNodeContainer = "node-container";
     public static readonly string ussNodeLabel = "node-label";
-    public static readonly string ussNodeTextField = "node-text-field";
 
-    private int m_Id = 1;
+    private int m_Id;
     private TreeView m_TreeView;
     private VisualElement m_RuleInspectorContainer;
 
@@ -27,6 +24,7 @@ public class SequenceTreeView : NodesWindow
 
     void CreateGUI()
     {
+        m_Id = 0;
         uxml.CloneTree(rootVisualElement);
 
 
@@ -70,21 +68,16 @@ public class SequenceTreeView : NodesWindow
         // Set TreeView.bindItem to bind an initialized node to a data item.
         m_TreeView.bindItem = (VisualElement element, int index) =>
         {
-            //Debug.Log($"Label: {(element as NodeName).id}, Node Name: {m_TreeView.GetItemDataForIndex<INode>(index).Id}");
             element.userData = index;
             var node = m_TreeView.GetItemDataForIndex<INode>(index);
-            element.Q<Label>("prefix").text = node.Prefix;
+            string prefix = node.Prefix == 0 ? "R." : GetNodePrefix(node);
+            element.Q<Label>("prefix").text = prefix;
             element.Q<Label>("nodeName").text = node.Name;
-        };
-
-        m_TreeView.destroyItem = (VisualElement element) =>
-        {
-            Debug.Log($"Destroyed: {element.userData}");
         };
 
 
         m_TreeView.onSelectionChange += UpdateRuleEditorStatus;
-        m_TreeView.RegisterCallback<KeyDownEvent>(evt => { if (evt.keyCode == KeyCode.Delete) DeleteItemNode(); } );
+        m_TreeView.RegisterCallback<KeyDownEvent>(evt => { if (evt.keyCode == KeyCode.Delete) DeleteItemNode(evt); } );
 
         m_RuleInspectorContainer = rootVisualElement.Q<VisualElement>("RuleInspectorContainer");
         m_RuleInspectorContainer.SetEnabled(false);
@@ -92,6 +85,13 @@ public class SequenceTreeView : NodesWindow
         ruleButton.clickable = new Clickable(OnButtonClicked);
 
 
+    }
+
+    private string GetNodePrefix(INode node)
+    {
+        if (node.Prefix == 0) return "";
+        var parent = m_TreeView.GetItemDataForId<Internal>(node.ParentId);
+        return GetNodePrefix(parent) + $"{node.Prefix}.";
     }
 
     private void BuildContextualMenu(ContextualMenuPopulateEvent evt, VisualElement container)
@@ -102,11 +102,28 @@ public class SequenceTreeView : NodesWindow
         evt.menu.AppendAction(InternalNodeNames["parallel"], a => { UpdateNodeName(InternalNodeNames["parallel"], container); }, DropdownMenuAction.AlwaysEnabled);
     }
 
-    private void DeleteItemNode()
+    private void DeleteItemNode(KeyDownEvent evt)
     {
         var selection = m_TreeView.selectedItem as INode;
-        if (selection.Id == 1) return;
+        if (selection.Id == 0) return;
+        var parent = m_TreeView.GetItemDataForId<Internal>(selection.ParentId);
+        //Consider only the siblings with higher Id since they are the only ones that need to be changed.
+        var siblings = parent.childrenIds.FindAll(x => x > selection.Id);
+        //UpdatePrefixes(new Queue<int>(siblings));
+        siblings.ForEach(x => { m_TreeView.GetItemDataForId<INode>(x).Prefix--; });
         m_TreeView.TryRemoveItem(selection.Id);
+        parent.childrenIds.Remove(selection.Id);
+
+    }
+
+    private void UpdatePrefixes(Queue<int> nodes)
+    {
+        while(nodes.Count() != 0)
+        {
+            var node = m_TreeView.GetItemDataForId<INode>(nodes.Dequeue());
+            node.Prefix--;
+        }
+
     }
 
     private void UpdateNodeName(string newName, VisualElement container)
@@ -160,11 +177,12 @@ public class SequenceTreeView : NodesWindow
         {
             int id = ++m_Id;
             var selection = selectionCollection.First();
-            string prefix = selection.data.Prefix == "R." ? "" : selection.data.Prefix;
-            prefix += $"{selection.children.Count() + 1}.";
+            int prefix = selection.children.Count() + 1;
 
             if (nodeType == "leaf") node = new Leaf(id, "No Rule", prefix);
             else node = new Internal(id, InternalNodeNames[nodeType], prefix);
+            node.ParentId = selection.id;
+            (selection.data as Internal).childrenIds.Add(id);
             var newItem = new TreeViewItemData<INode>(id, node);
             m_TreeView.AddItem(newItem, parentId: selection.id, rebuildTree: true);
             m_TreeView.ExpandItem(selection.id);
