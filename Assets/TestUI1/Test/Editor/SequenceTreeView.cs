@@ -1,9 +1,11 @@
 using System.Collections.Generic;
+using System.Drawing.Design;
 using System.Linq;
 using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
+using static UnityEngine.Rendering.DebugUI;
 
 
 public class SequenceTreeView : NodesWindow
@@ -68,8 +70,6 @@ public class SequenceTreeView : NodesWindow
             textField.style.display = DisplayStyle.None;
 
             textField.RegisterValueChangedCallback(e => UpdateNodeName(e, container));
-            textField.RegisterCallback<FocusOutEvent>(e => UpdateNodeName(container));
-
 
 
             container.Add(prefix);
@@ -140,14 +140,10 @@ public class SequenceTreeView : NodesWindow
         textField.style.display = DisplayStyle.Flex;
         textField.SetValueWithoutNotify(selection.Name);
 
-        Debug.Log($"focus from root? {rootVisualElement.focusController.focusedElement == textField}");
-        Debug.Log($"focus from textField? {textField.focusController.focusedElement == textField}");
-        //rootVisualElement.schedule.Execute(() => { textField.Focus(); });
-        Debug.Log($"focus from root? {rootVisualElement.focusController.focusedElement == textField}");
-        Debug.Log($"focus from textField? {textField.focusController.focusedElement == textField}");
+        rootVisualElement.schedule.Execute(() => { 
+            textField.Focus();
+        });
     }
-
-
 
     private void UpdateRuleEditorStatus(IEnumerable<object> obj)
     {
