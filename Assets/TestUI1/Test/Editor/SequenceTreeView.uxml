@@ -7,17 +7,48 @@
             </uie:Toolbar>
             <ui:TreeView fixed-item-height="20" name="TreeView" style="background-color: rgb(48, 48, 48); flex-grow: 1;" />
         </ui:VisualElement>
-        <ui:VisualElement name="RuleInspectorContainer">
-            <uie:Toolbar name="RuleInspectorToolbar">
+        <ui:VisualElement name="RuleEditorContainer">
+            <uie:Toolbar name="RuleEditorToolbar">
                 <uie:ToolbarMenu tabindex="-1" display-tooltip-when-elided="true" text="+" name="AddMenu" style="font-size: 26px;" />
                 <uie:ToolbarSpacer name="Spacer" style="flex-grow: 1;" />
-                <uie:ToolbarButton tabindex="-1" text="Discard" display-tooltip-when-elided="true" name="DiscardButton" />
-                <uie:ToolbarButton tabindex="-1" text="Save" display-tooltip-when-elided="true" name="SaveButton" style="border-right-width: 1px; border-left-width: 0;" />
+                <uie:ToolbarButton tabindex="-1" text="Discard" display-tooltip-when-elided="true" name="DiscardButton" style="-unity-text-align: middle-left;" />
+                <uie:ToolbarButton tabindex="-1" text="Save" display-tooltip-when-elided="true" name="SaveButton" style="border-right-width: 1px; border-left-width: 0; -unity-text-align: middle-left;" />
             </uie:Toolbar>
-            <ui:VisualElement name="RuleInspector">
-                <ui:Button tabindex="0" text="Button" display-tooltip-when-elided="true" name="Button" />
-                <ui:VisualElement name="VisualElement" class="node-container">
-                    <ui:Label text="Parallel Execution" name="Label" class="node-label" />
+            <ui:VisualElement name="RuleEditor" style="flex-direction: row; flex-grow: 1; margin-left: 3px; margin-right: 3px; margin-top: 3px; margin-bottom: 3px;">
+                <ui:VisualElement name="Headers" style="background-color: rgb(45, 45, 45);">
+                    <ui:VisualElement name="Event" style="min-height: 50px;">
+                        <ui:Label tabindex="-1" text="When" display-tooltip-when-elided="true" name="EventLabel" style="-unity-text-align: middle-center; -unity-font-style: bold; font-size: 14px; padding-left: 15px; padding-right: 15px; padding-top: 2px; padding-bottom: 2px; background-color: rgb(30, 30, 30); min-height: 50px;" />
+                    </ui:VisualElement>
+                    <ui:VisualElement name="Conditions" style="flex-grow: 1; max-height: 150px;">
+                        <ui:Label tabindex="-1" text="If" display-tooltip-when-elided="true" name="ConditionsLabel" style="-unity-text-align: middle-center; -unity-font-style: bold; font-size: 14px; padding-left: 15px; padding-right: 15px; padding-top: 2px; padding-bottom: 2px; background-color: rgb(30, 30, 30); min-height: 50px;" />
+                    </ui:VisualElement>
+                    <ui:VisualElement name="Actions" style="min-width: auto; min-height: auto; flex-grow: 1;">
+                        <ui:Label tabindex="-1" text="Then" display-tooltip-when-elided="true" name="ActionsLabel" style="-unity-text-align: middle-center; -unity-font-style: bold; font-size: 14px; padding-left: 15px; padding-right: 15px; padding-top: 2px; padding-bottom: 2px; background-color: rgb(30, 30, 30); min-height: 50px;" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:VisualElement name="RuleParts" style="flex-grow: 1; margin-left: 5px;">
+                    <ui:VisualElement name="Event" style="flex-direction: row; min-height: 50px;">
+                        <ui:VisualElement name="SubjectC" style="flex-direction: row;">
+                            <ui:Label tabindex="-1" text="The" display-tooltip-when-elided="true" name="PrefixThe" style="-unity-font-style: bold; -unity-text-align: middle-center;" />
+                            <ui:DropdownField index="-1" name="Subject" style="flex-grow: 1; margin-top: 7px; margin-bottom: 7px;" />
+                        </ui:VisualElement>
+                        <ui:VisualElement name="VerbC" style="flex-direction: row;">
+                            <ui:DropdownField index="-1" name="Verb" style="flex-grow: 1; margin-top: 7px; margin-bottom: 7px; display: none;" />
+                            <ui:DropdownField index="-1" name="ObjectVerb" style="flex-grow: 1; margin-top: 7px; margin-bottom: 7px; display: none;" />
+                        </ui:VisualElement>
+                        <ui:VisualElement name="ObjectC" style="flex-direction: row;">
+                            <ui:Label tabindex="-1" text="The" display-tooltip-when-elided="true" name="PrefixThe" style="-unity-text-align: middle-center; display: none;" />
+                            <ui:DropdownField index="-1" name="Prep" style="flex-grow: 1; margin-top: 7px; margin-bottom: 7px; display: none;" />
+                            <ui:DropdownField index="-1" name="Object" style="flex-grow: 1; margin-top: 7px; margin-bottom: 7px; display: none;" />
+                            <ui:DropdownField index="-1" name="Value" style="flex-grow: 1; margin-top: 7px; margin-bottom: 7px; display: none;" />
+                            <ui:VisualElement name="InputField" style="flex-direction: row;">
+                                <ui:TextField picking-mode="Ignore" value="filler text" text="Enter Text" name="TextInput" is-delayed="true" style="display: none; margin-top: 7px; margin-bottom: 7px;" />
+                                <ui:IntegerField value="0" name="IntInput" is-delayed="true" style="margin-top: 7px; margin-bottom: 7px; display: none;" />
+                                <ui:FloatField value="0" name="DecimalInput" is-delayed="true" style="margin-bottom: 7px; margin-top: 7px; display: none;" />
+                                <ui:DropdownField index="-1" name="Dropdown" style="flex-grow: 1; margin-top: 7px; margin-bottom: 7px; display: none;" />
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
                 </ui:VisualElement>
             </ui:VisualElement>
         </ui:VisualElement>

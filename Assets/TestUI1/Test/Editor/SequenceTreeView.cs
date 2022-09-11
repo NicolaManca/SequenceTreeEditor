@@ -1,9 +1,13 @@
+using Antlr4.Runtime.Tree;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
+using System.Text.RegularExpressions;
 using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
+using UnityEngine.UI;
 using UnityEngine.UIElements;
 
 
@@ -14,7 +18,9 @@ public class SequenceTreeView : NodesWindow
 
     private int m_Id;
     private TreeView m_TreeView;
-    private VisualElement m_RuleInspectorContainer;
+    private VisualElement m_RuleEditorContainer;
+
+    private Dictionary<int, Dictionary<GameObject, string>> m_Subjects;
 
     [MenuItem("Sequence/Sequence Tree")]
     static void Summon()
@@ -79,13 +85,37 @@ public class SequenceTreeView : NodesWindow
         m_TreeView.onSelectionChange += UpdateRuleEditorStatus;
         m_TreeView.RegisterCallback<KeyDownEvent>(evt => { if (evt.keyCode == KeyCode.Delete) DeleteItemNode(evt); } );
 
-        m_RuleInspectorContainer = rootVisualElement.Q<VisualElement>("RuleInspectorContainer");
-        m_RuleInspectorContainer.SetEnabled(false);
-        var ruleButton = m_RuleInspectorContainer.Q<VisualElement>("RuleInspector").Q<UnityEngine.UIElements.Button>();
-        ruleButton.clickable = new Clickable(OnButtonClicked);
+        m_RuleEditorContainer = rootVisualElement.Q<VisualElement>("RuleEditorContainer");
+        m_RuleEditorContainer.SetEnabled(false);
+        var RuleEditor = m_RuleEditorContainer.Q<VisualElement>("RuleEditor");
+        var eventPart = RuleEditor.Q<VisualElement>("RuleParts").Q<VisualElement>("Event");
+        RuleEditorManager.SetUpEventDropdownMenus(eventPart);
 
 
     }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     private string GetNodePrefix(INode node)
     {
@@ -139,10 +169,12 @@ public class SequenceTreeView : NodesWindow
         var selection = obj.First() as INode;
         if (selection.GetType() != typeof(Leaf))
         {
-            m_RuleInspectorContainer.SetEnabled(false);
+            m_RuleEditorContainer.SetEnabled(false);
             return;
         }
-        m_RuleInspectorContainer.SetEnabled(true);
+
+        m_RuleEditorContainer.SetEnabled(true);
+
     }
 
     public void OnButtonClicked()
@@ -150,7 +182,7 @@ public class SequenceTreeView : NodesWindow
         var selectionCollection = m_TreeView.GetSelectedItems<INode>();
         if (selectionCollection.Count() > 0)
         {
-            var ruleLabel = m_RuleInspectorContainer.Q<VisualElement>("RuleInspector").Q<Label>();
+            var ruleLabel = m_RuleEditorContainer.Q<VisualElement>("RuleEditor").Q<Label>();
             var selection = selectionCollection.First();
             var leafNode = selection.data as Leaf;
             var rule = leafNode.Rule;
