@@ -57,11 +57,16 @@ public class RuleEditorManager
 
         subjectDrop.RegisterValueChangedCallback(delegate { DropdownValueChangedSubject(subjectDrop); });
         verbDrop.RegisterValueChangedCallback(delegate { DropdownValueChangedVerb(verbDrop); });
+        //object without the value e.g. looks at gameobject
+        objectDrop.RegisterValueChangedCallback(delegate { DropdownValueChangedObject(objectDrop); });
+        //object with the value e.g. changes "active" ...
+        valueDrop.RegisterValueChangedCallback(delegate { DropdownValueChangedObjectValue(valueDrop); });
 
 
         SetUpSubject(subjectDrop);
         //SetUpVerb(verbDrop);
     }
+
 
 
     static void SetUpSubject(DropdownField subjectDrop)
@@ -295,9 +300,15 @@ public class RuleEditorManager
         }
     }
 
+    static void DropdownValueChangedObjectValue(DropdownField valueDrop)
+    {
+        throw new NotImplementedException();
+    }
 
-
-
+    static void DropdownValueChangedObject(DropdownField objectDrop)
+    {
+        throw new NotImplementedException();
+    }
 
 
 
