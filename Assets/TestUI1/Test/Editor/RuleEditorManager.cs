@@ -1,45 +1,58 @@
 using ECARules4All;
 using ECARules4All.RuleEngine;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
-using Unity.VisualScripting;
-using UnityEditor.SearchService;
+using System.Xml;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.UIElements;
 using UnityEngine.XR.Interaction.Toolkit.Examples.UIRule.Prefabs;
+using static UnityEngine.Rendering.DebugUI;
+using static UnityEngine.Rendering.DebugUI.MessageBox;
+using FloatField = UnityEngine.UIElements.FloatField;
 
 public class RuleEditorManager
 {
-    //Event Dropdowns and TextField
-    static DropdownField subjectDrop;
-    static DropdownField verbDrop;
-    static DropdownField objectVerbDrop;
-    static Label prefixThe;
-    static DropdownField prepDrop;
-    static DropdownField objectDrop;
-    static DropdownField valueDrop;
-    static TextField textField;
-    static IntegerField intField;
-    static FloatField decimalField;
-    static DropdownField inputDrop;
+    public ActionDropdownsManager eventManager = new();
 
-    static Dictionary<int, Dictionary<GameObject, string>> subjects = new();
-    static Dictionary<int, VerbComposition> verbsItem = new();
-    static Dictionary<string, List<ActionAttribute>> verbsString = new();
+
+    public void SetUpEventDropdownMenus(VisualElement eventContainer)
+    {
+        eventManager.SetUpDropdownMenus(eventContainer);
+    }
+}
+
+public class ActionDropdownsManager
+{
+    #region Attributes
+    //Action Dropdowns and TextField
+    private DropdownField subjectDrop;
+    private DropdownField verbDrop;
+    private DropdownField objectVerbDrop;
+    private Label prefixThe;
+    private DropdownField prepDrop;
+    private DropdownField objectDrop;
+    private DropdownField valueDrop;
+    private TextField textField;
+    private IntegerField intField;
+    private FloatField decimalField;
+    private DropdownField inputDrop;
+
+    private Dictionary<int, Dictionary<GameObject, string>> subjects = new();
+    private Dictionary<int, VerbComposition> verbsItem = new();
+    private Dictionary<string, List<ActionAttribute>> verbsString = new();
     //Dictionary for the subject selected with all its state variables and the type
-    static Dictionary<string, (ECARules4AllType, Type)> stateVariables = new();
+    private Dictionary<string, (ECARules4AllType, Type)> stateVariables = new();
 
     //Selected
-    static GameObject subjectSelected; //gameobject with the subject
-    static GameObject previousSelectedSubject, previousSelectedObject = null;
-    static string subjectSelectedType; //e.g. ECALight, Character....
-    static string verbSelectedString; //string with the verb
-    static string VerbSelectedType;
-    static GameObject objectSelected;
-    static string objSelectedType;
+    private GameObject subjectSelected; //gameobject with the subject
+    private GameObject previousSelectedSubject, previousSelectedObject = null;
+    private string subjectSelectedType; //e.g. ECALight, Character....
+    private string verbSelectedString; //string with the verb
+    private string VerbSelectedType;
+    private GameObject objectSelected;
+    private string objSelectedType;
 
     public static Dictionary<string, Color> colorDict = new()
     {
@@ -83,19 +96,19 @@ public class RuleEditorManager
         {UIColors.cyan, "cyan"}, // 0xff17becf
         {UIColors.white, "white"}, // 0xffffffff
     };
+    #endregion
 
 
-
-    public static void SetUpEventDropdownMenus(VisualElement eventPart)
+    public void SetUpDropdownMenus(VisualElement actionContainer)
     {
-        var subjectPart = eventPart.Q<VisualElement>("SubjectC");
+        var subjectPart = actionContainer.Q<VisualElement>("SubjectC");
         subjectDrop = subjectPart.Q<DropdownField>("Subject");
 
-        var verbPart = eventPart.Q<VisualElement>("VerbC");
+        var verbPart = actionContainer.Q<VisualElement>("VerbC");
         verbDrop = verbPart.Q<DropdownField>("Verb");
         objectVerbDrop = verbPart.Q<DropdownField>("ObjectVerb");
 
-        var objectPart = eventPart.Q<VisualElement>("ObjectC");
+        var objectPart = actionContainer.Q<VisualElement>("ObjectC");
         prefixThe = objectPart.Q<Label>("PrefixThe");
         prepDrop = objectPart.Q<DropdownField>("Prep");
         objectDrop = objectPart.Q<DropdownField>("Object");
@@ -118,8 +131,7 @@ public class RuleEditorManager
     }
 
 
-
-    static void SetUpSubject(DropdownField subjectDrop)
+    void SetUpSubject(DropdownField subjectDrop)
     {
         subjects = RuleUtils.FindSubjects();
         List<string> entries = new List<string>();
@@ -144,7 +156,7 @@ public class RuleEditorManager
 
     }
 
-    static void DropdownValueChangedSubject(DropdownField subjectDropdown)
+    void DropdownValueChangedSubject(DropdownField subjectDropdown)
     {
         DisableNextComponent("subject");
         if (subjectDropdown.value == "<no-value>") return;
@@ -197,7 +209,7 @@ public class RuleEditorManager
         verbDrop.SetValueWithoutNotify("<no-value>");
     }
 
-    static void DropdownValueChangedVerb(DropdownField verbDrop)
+    void DropdownValueChangedVerb(DropdownField verbDrop)
     {
         //retrieve selected string and gameobject
         verbSelectedString = verbDrop.value;
@@ -349,8 +361,8 @@ public class RuleEditorManager
             objectVerbDrop.SetValueWithoutNotify("<no-value>");
         }
     }
-    
-    static void DropdownValueChangedObject(DropdownField objectDrop)
+
+    void DropdownValueChangedObject(DropdownField objectDrop)
     {
         //Debug.Log("Called ChangedObjectValue");
         DisableNextComponent("object");
@@ -368,7 +380,7 @@ public class RuleEditorManager
         else objectSelected = null;
     }
 
-    static void DropdownValueChangedObjectValue(DropdownField objectVerbDrop)
+    void DropdownValueChangedObjectValue(DropdownField objectVerbDrop)
     {
         DisableNextComponent("object");
         //retrieve selected string and gameobject
@@ -469,8 +481,7 @@ public class RuleEditorManager
 
 
 
-
-    static void ActivateInputField(string validationType)
+    void ActivateInputField(string validationType)
     {
         switch (validationType)
         {
@@ -492,7 +503,7 @@ public class RuleEditorManager
         }
     }
 
-    static void DisableNextComponent(string changedField)
+    void DisableNextComponent(string changedField)
     {
         switch (changedField)
         {
@@ -529,5 +540,323 @@ public class RuleEditorManager
                 valueDrop.choices.Clear();
                 break;
         }
+    }
+}
+
+
+public class ConditionDropdownsManager
+{
+    #region Attributes
+    //Action Dropdowns and TextField
+    private DropdownField toCheckDrop;
+    private DropdownField propertyDrop;
+    private DropdownField checkSymbolDrop;
+    private DropdownField compareWithDrop;
+    private DropdownField andOrDrop;
+
+    //Input Fields reference
+    private TextField textField;
+    private IntegerField intField;
+    private FloatField decimalField;
+
+    //Dictionary foreach subject with the reference of the gameobject
+    private Dictionary<int, Dictionary<GameObject, string>> toCheckDictionary = new Dictionary<int, Dictionary<GameObject, string>>();
+    //Dictionary for the subject selected with all its state variables and the type
+    private Dictionary<string, (ECARules4AllType, Type)> stateVariables = new Dictionary<string, (ECARules4AllType, Type)>();
+
+    //Selected toCheck
+    private GameObject toCheckSelected, previousToCheckSelected; //gameobject with the subject
+    private string toCheckSelectedType;
+
+    //Selected property
+    private string propertySelected;
+
+    //selected symbol
+    private string selectedSymbol;
+
+    private static List<string> booleanSymbols = new List<string>() { "is", "is not" };
+    private static List<string> matemathicalSymbols = new List<string>() { "=", "!=", ">", "<", "<=", ">=" };
+
+    private ECARules4AllType compareWithType;
+    #endregion
+
+
+    public void SetUpDropdownMenus(VisualElement conditionContainer)
+    {
+
+        var toCheckPart = conditionContainer.Q<VisualElement>("ToCheckC");
+        toCheckDrop = toCheckPart.Q<DropdownField>("ToCheck");
+        andOrDrop = toCheckPart.Q<DropdownField>("AndOr");
+
+        var propertyPart = conditionContainer.Q<VisualElement>("PropertyC");
+        propertyDrop = propertyPart.Q<DropdownField>("Property");
+        checkSymbolDrop = propertyPart.Q<DropdownField>("CheckSymbol");
+
+        var compareWithPart = conditionContainer.Q<VisualElement>("CompareWithC");
+        compareWithDrop = compareWithPart.Q<DropdownField>("CompareWith");
+        textField = compareWithPart.Q<TextField>("TextInput");
+        intField = compareWithPart.Q<IntegerField>("IntInput");
+        decimalField = compareWithPart.Q<FloatField>("DecimalInput");
+
+
+
+        //at start we must populate the first dropdown
+        PopulateToCheckDropdown();
+
+        //Listener
+        toCheckDrop.RegisterValueChangedCallback(delegate { DropdownValueChangedToCheck(toCheckDrop); });
+        propertyDrop.RegisterValueChangedCallback(delegate { DropdownValueChangedProperty(propertyDrop); });
+        checkSymbolDrop.RegisterValueChangedCallback(delegate { DropdownValueChangedCheckSymbol(checkSymbolDrop); });
+    }
+
+    private void PopulateToCheckDropdown()
+    {
+        toCheckDrop.choices.Clear();
+        toCheckDictionary = RuleUtils.FindSubjects();
+
+        // Used to sort each dropdown's options
+        List<string> entries = new List<string>();
+        entries.Add("<no-value>");
+
+        for (int i = 0; i < toCheckDictionary.Count; i++)
+        {
+            foreach (KeyValuePair<GameObject, string> entry in toCheckDictionary[i])
+            {
+                string type = RuleUtils.FindInnerTypeNotBehaviour(entry.Key);
+                type = RuleUtils.RemoveECAFromString(type);
+                entries.Add(type + " " + entry.Key.name);
+            }
+        }
+        entries.Sort();
+        toCheckDrop.choices = entries;
+        toCheckDrop.SetValueWithoutNotify("<no-value>");
+    }
+
+    private void DropdownValueChangedToCheck(DropdownField toCheck)
+    {
+        //if previous activated, hide next elements
+        DisableNextComponent("toCheck");
+
+        //activate next element
+        propertyDrop.style.display = DisplayStyle.Flex;
+        propertyDrop.choices.Clear();
+
+        //retrieve selected string and gameobject
+        string selectedSubjectString = toCheck.value;
+
+        //I need to cut the string because in the dropdown we use "Type Name", the dictionary only contains the type
+        string selectedCutString = Regex.Match(selectedSubjectString, "[^ ]* (.*)").Groups[1].Value;
+        toCheckSelectedType = Regex.Match(selectedSubjectString, "^[^ ]+").Value;
+        previousToCheckSelected = toCheckSelected;
+        toCheckSelected = GameObject.Find(selectedCutString).gameObject;
+
+        stateVariables = RuleUtils.FindStateVariables(toCheckSelected);
+
+        // Used to sort each dropdown's options
+        List<string> entries = new List<string>();
+        entries.Add("");
+        foreach (var var in stateVariables)
+        {
+            if (var.Key == "rotation")
+            {
+                entries.Add("rotation x");
+                entries.Add("rotation y");
+                entries.Add("rotation z");
+            }
+            else entries.Add(var.Key);
+        }
+        entries.Sort();
+        propertyDrop.choices = entries;
+        propertyDrop.SetValueWithoutNotify("<no-value>");
+    }
+
+    private void DropdownValueChangedProperty(DropdownField property)
+    {
+        //if previous activated, hide next elements
+        DisableNextComponent("property");
+
+        //activate next element
+        checkSymbolDrop.style.display = DisplayStyle.Flex;
+        checkSymbolDrop.choices.Clear();
+
+        //retrieve selected string and type
+        propertySelected = property.value;
+        if (propertySelected.StartsWith("rotation ")) propertySelected = "rotation";
+
+        //thanks to the dictionary, we can retrieve the type:
+        ECARules4AllType type = stateVariables[propertySelected].Item1;
+
+
+        // Used to sort each dropdown's options
+        List<string> entries = new List<string>();
+        entries.Add("<no-value>");
+        switch (type)
+        {
+            case ECARules4AllType.Float:
+            case ECARules4AllType.Integer:
+                foreach (var symbol in matemathicalSymbols)
+                {
+                    entries.Add(symbol);
+                }
+                break;
+
+            case ECARules4AllType.Boolean:
+            case ECARules4AllType.Position:
+            case ECARules4AllType.Rotation:
+            case ECARules4AllType.Path:
+            case ECARules4AllType.Color:
+            case ECARules4AllType.Text:
+            case ECARules4AllType.Identifier:
+            case ECARules4AllType.Time:
+                foreach (var symbol in booleanSymbols)
+                {
+                    entries.Add(symbol);
+                }
+                break;
+        }
+        entries.Sort();
+        checkSymbolDrop.choices = entries;
+        checkSymbolDrop.SetValueWithoutNotify("<no-value>");
+    }
+
+    private void DropdownValueChangedCheckSymbol(DropdownField checkSymbol)
+    {
+        //retrieve selected string 
+        selectedSymbol = checkSymbol.value;
+
+        ECARules4AllType type = stateVariables[propertySelected].Item1;
+        compareWithType = type;
+
+        // Used to sort each dropdown's options
+        List<string> entries = new List<string>();
+
+        switch (type)
+        {
+            case ECARules4AllType.Color:
+                compareWithDrop.choices.Clear();
+                compareWithDrop.style.display = DisplayStyle.Flex;
+                entries.Add("<no-value>");
+                // Add colors to dropdown
+                foreach (KeyValuePair<string, Color> kvp in DropdownHandler.colorDict)
+                    entries.Add(kvp.Key);
+                compareWithDrop.SetValueWithoutNotify("<no-value>");
+                //if previous activated, hide the input fields
+                textField.style.display = DisplayStyle.None;
+                intField.style.display = DisplayStyle.None;
+                decimalField.style.display = DisplayStyle.None;
+                break;
+            case ECARules4AllType.Position:
+                //This uses the raycaster. TODO: take position of currently selected GameObject.
+                compareWithDrop.choices.Clear();
+                compareWithDrop.style.display = DisplayStyle.Flex;
+                entries.Add("<no-value>");
+                compareWithDrop.SetValueWithoutNotify("<no-value>");
+                //if previous activated, hide the input fields
+                textField.style.display = DisplayStyle.None;
+                intField.style.display = DisplayStyle.None;
+                decimalField.style.display = DisplayStyle.None;
+                break;
+            case ECARules4AllType.Boolean:
+                compareWithDrop.choices.Clear();
+                compareWithDrop.style.display = DisplayStyle.Flex;
+                entries.Add("<no-value>");
+                //TODO togliere questo schifo
+                if (toCheckSelectedType == "ECALight" || toCheckSelectedType == "Light")
+                {
+                    entries.Add("on");
+                    entries.Add("off");
+                }
+                else
+                {
+                    entries.Add("true");
+                    entries.Add("false");
+                }
+                compareWithDrop.SetValueWithoutNotify("<no-value>");
+                //if previous activated, hide the input fields
+                textField.style.display = DisplayStyle.None;
+                intField.style.display = DisplayStyle.None;
+                decimalField.style.display = DisplayStyle.None;
+                break;
+            case ECARules4AllType.Float:
+            case ECARules4AllType.Time:
+            case ECARules4AllType.Rotation:
+                ActivateInputField("decimal");
+                break;
+            case ECARules4AllType.Integer:
+                ActivateInputField("integer");
+                break;
+            case ECARules4AllType.Text:
+                ActivateInputField("alphanumeric");
+                break;
+
+            case ECARules4AllType.Identifier:
+                //TODO alias
+                if (propertySelected == "pov")
+                {
+                    compareWithDrop.choices.Clear();
+                    compareWithDrop.style.display = DisplayStyle.Flex;
+                    entries.Add("<no-value>");
+                    entries.Add("First");
+                    entries.Add("Third");
+                    compareWithDrop.SetValueWithoutNotify("<no-value>");
+                    //if previous activated, hide the input fields
+                    textField.style.display = DisplayStyle.None;
+                    intField.style.display = DisplayStyle.None;
+                    decimalField.style.display = DisplayStyle.None;
+                }
+
+                break;
+        }
+        entries.Sort();
+        compareWithDrop.choices = entries;
+        compareWithDrop.SetValueWithoutNotify("<no-value>");
+    }
+
+
+    void DisableNextComponent(string changedField)
+    {
+        switch (changedField)
+        {
+            // ToCheck
+            case "toCheck":
+                propertyDrop.style.display = DisplayStyle.None;
+                checkSymbolDrop.style.display = DisplayStyle.None;
+                compareWithDrop.style.display = DisplayStyle.None;
+                textField.style.display = DisplayStyle.None;
+                intField.style.display = DisplayStyle.None;
+                decimalField.style.display = DisplayStyle.None;
+
+                break;
+            // Property
+            case "property":
+                checkSymbolDrop.style.display = DisplayStyle.None;
+                compareWithDrop.style.display = DisplayStyle.None;
+                textField.style.display = DisplayStyle.None;
+                intField.style.display = DisplayStyle.None;
+                decimalField.style.display = DisplayStyle.None;
+                break;
+        }
+    }
+    void ActivateInputField(string validationType)
+    {
+        switch (validationType)
+        {
+            case "decimal":
+                decimalField.style.display = DisplayStyle.Flex;
+                decimalField.Focus();
+                decimalField.value = 0;
+                break;
+            case "integer":
+                intField.style.display = DisplayStyle.Flex;
+                intField.Focus();
+                intField.value = 0;
+                break;
+            default:
+                textField.style.display = DisplayStyle.Flex;
+                textField.Focus();
+                textField.value = "";
+                break;
+        }
+        compareWithDrop.style.display = DisplayStyle.None;
     }
 }

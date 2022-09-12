@@ -20,7 +20,7 @@ public class SequenceTreeView : NodesWindow
     private TreeView m_TreeView;
     private VisualElement m_RuleEditorContainer;
 
-    private Dictionary<int, Dictionary<GameObject, string>> m_Subjects;
+    private RuleEditorManager m_RuleEditorManager = new();
 
     [MenuItem("Sequence/Sequence Tree")]
     static void Summon()
@@ -89,7 +89,7 @@ public class SequenceTreeView : NodesWindow
         m_RuleEditorContainer.SetEnabled(false);
         var RuleEditor = m_RuleEditorContainer.Q<VisualElement>("RuleEditor");
         var eventPart = RuleEditor.Q<VisualElement>("RuleParts").Q<VisualElement>("Event");
-        RuleEditorManager.SetUpEventDropdownMenus(eventPart);
+        m_RuleEditorManager.SetUpEventDropdownMenus(eventPart);
 
 
     }

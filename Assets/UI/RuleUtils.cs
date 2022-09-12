@@ -758,6 +758,7 @@ public class RuleUtils : MonoBehaviour
     }
 
 
+    //Added to work with UnityEngine.UIElements.DropdownField
     public static void AddObjectPassiveVerbs(Dictionary<int, Dictionary<GameObject, string>> subjects, string comp,
         DropdownField objDrop)
     {
@@ -819,6 +820,7 @@ public class RuleUtils : MonoBehaviour
         AddToDropdownInAlphabeticalOrder(objDrop, entries);
     }
 
+    //Added to work with UnityEngine.UIElements.DropdownField
     public static void AddObjectActiveVerbs(Dictionary<int, Dictionary<GameObject, string>> subjects, string comp,
         DropdownField objDrop, GameObject subjectSelected)
     {
@@ -885,6 +887,7 @@ public class RuleUtils : MonoBehaviour
             dropdown.options.Add(new Dropdown.OptionData( s));
         }
     }
+
 
 
     public static void SaveRulesToFile()

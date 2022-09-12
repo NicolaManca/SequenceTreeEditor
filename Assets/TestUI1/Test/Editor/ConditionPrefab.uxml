@@ -1,0 +1,24 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="project://database/Assets/TestUI1/Test/Editor/SequenceTreeView.uss?fileID=7433441132597879392&amp;guid=ffc9f48c1da3b8645979cb759602e9ab&amp;type=3#SequenceTreeView" />
+    <ui:VisualElement name="Condition" style="flex-direction: row; max-height: 50px; min-height: 50px;">
+        <ui:VisualElement name="ToCheckC" style="flex-direction: row;">
+            <ui:DropdownField index="-1" choices="System.Collections.Generic.List`1[System.String]" name="AndOr" style="max-width: 100px; min-width: 100px; margin-top: 7px; margin-bottom: 7px; display: none;" />
+            <ui:Label tabindex="-1" text="The" display-tooltip-when-elided="true" name="PrefixThe" style="-unity-font-style: bold; -unity-text-align: middle-left;" />
+            <ui:DropdownField index="-1" name="ToCheck" style="max-width: 200px; min-width: 100px; margin-top: 7px; margin-bottom: 7px;" />
+        </ui:VisualElement>
+        <ui:VisualElement name="PropertyC" style="flex-direction: row;">
+            <ui:DropdownField index="-1" choices="System.Collections.Generic.List`1[System.String]" name="Property" style="margin-top: 7px; margin-bottom: 7px; max-width: 200px; min-width: 100px; display: none;" />
+            <ui:DropdownField index="-1" choices="System.Collections.Generic.List`1[System.String]" name="CheckSymbol" style="max-width: 200px; min-width: 100px; margin-top: 7px; margin-bottom: 7px; display: none;" />
+        </ui:VisualElement>
+        <ui:VisualElement name="CompareWithC" style="flex-direction: row;">
+            <ui:DropdownField index="-1" choices="System.Collections.Generic.List`1[System.String]" name="CompareWith" style="margin-top: 7px; margin-bottom: 7px; max-width: 200px; min-width: 100px; display: none;" />
+            <ui:TextField picking-mode="Ignore" text="Enter Text" name="TextInput" class="input-field" style="max-width: 200px; min-width: 100px; margin-top: 7px; margin-bottom: 7px; display: none;" />
+            <ui:IntegerField value="0" name="IntInput" class="input-field" style="max-width: 200px; min-width: 100px; margin-top: 7px; margin-bottom: 7px; display: none;" />
+            <ui:FloatField value="0" name="DecimalInput" class="input-field" style="margin-top: 7px; margin-bottom: 7px; max-width: 200px; min-width: 100px; display: none;" />
+        </ui:VisualElement>
+        <ui:VisualElement name="Spacing" style="flex-grow: 1;" />
+        <ui:VisualElement name="RemoveButton" style="max-width: 50px; min-width: 50px; justify-content: center;">
+            <ui:Button tabindex="-1" text="Rmv" display-tooltip-when-elided="true" name="Button" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>
