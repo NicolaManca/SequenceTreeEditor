@@ -28,24 +28,24 @@
                 </ui:VisualElement>
                 <ui:VisualElement name="RuleParts" style="flex-grow: 1; margin-left: 5px;">
                     <ui:VisualElement name="Event" style="flex-direction: row; min-height: 50px;">
-                        <ui:VisualElement name="SubjectC" style="flex-direction: row;">
+                        <ui:VisualElement name="SubjectC" style="flex-direction: row; display: flex;">
                             <ui:Label tabindex="-1" text="The" display-tooltip-when-elided="true" name="PrefixThe" style="-unity-font-style: bold; -unity-text-align: middle-center;" />
-                            <ui:DropdownField index="-1" name="Subject" style="flex-grow: 1; margin-top: 7px; margin-bottom: 7px;" />
+                            <ui:DropdownField index="-1" name="Subject" style="margin-top: 7px; margin-bottom: 7px; max-width: 200px; min-width: 100px;" />
                         </ui:VisualElement>
                         <ui:VisualElement name="VerbC" style="flex-direction: row;">
-                            <ui:DropdownField index="-1" name="Verb" style="flex-grow: 1; margin-top: 7px; margin-bottom: 7px; display: none;" />
-                            <ui:DropdownField index="-1" name="ObjectVerb" style="flex-grow: 1; margin-top: 7px; margin-bottom: 7px; display: none;" />
+                            <ui:DropdownField index="-1" name="Verb" style="margin-top: 7px; margin-bottom: 7px; display: none; max-width: 200px; min-width: 100px;" />
+                            <ui:DropdownField index="-1" name="ObjectVerb" style="flex-grow: 1; margin-top: 7px; margin-bottom: 7px; display: none; max-width: 200px; min-width: 100px;" />
                         </ui:VisualElement>
-                        <ui:VisualElement name="ObjectC" style="flex-direction: row;">
+                        <ui:VisualElement name="ObjectC" style="flex-direction: row; flex-grow: 1;">
                             <ui:Label tabindex="-1" text="The" display-tooltip-when-elided="true" name="PrefixThe" style="-unity-text-align: middle-center; display: none;" />
-                            <ui:DropdownField index="-1" name="Prep" style="flex-grow: 1; margin-top: 7px; margin-bottom: 7px; display: none;" />
-                            <ui:DropdownField index="-1" name="Object" style="flex-grow: 1; margin-top: 7px; margin-bottom: 7px; display: none;" />
-                            <ui:DropdownField index="-1" name="Value" style="flex-grow: 1; margin-top: 7px; margin-bottom: 7px; display: none;" />
-                            <ui:VisualElement name="InputField" style="flex-direction: row;">
-                                <ui:TextField picking-mode="Ignore" value="filler text" text="Enter Text" name="TextInput" is-delayed="true" style="display: none; margin-top: 7px; margin-bottom: 7px;" />
-                                <ui:IntegerField value="0" name="IntInput" is-delayed="true" style="margin-top: 7px; margin-bottom: 7px; display: none;" />
-                                <ui:FloatField value="0" name="DecimalInput" is-delayed="true" style="margin-bottom: 7px; margin-top: 7px; display: none;" />
-                                <ui:DropdownField index="-1" name="Dropdown" style="flex-grow: 1; margin-top: 7px; margin-bottom: 7px; display: none;" />
+                            <ui:DropdownField index="-1" name="Prep" style="flex-grow: 1; margin-top: 7px; margin-bottom: 7px; display: none; max-width: 200px;" />
+                            <ui:DropdownField index="-1" name="Object" style="flex-grow: 1; margin-top: 7px; margin-bottom: 7px; display: none; max-width: 200px;" />
+                            <ui:DropdownField index="-1" name="Value" style="flex-grow: 1; margin-top: 7px; margin-bottom: 7px; display: none; max-width: 200px;" />
+                            <ui:VisualElement name="InputField" style="flex-direction: row; flex-grow: 1;">
+                                <ui:TextField picking-mode="Ignore" value="filler text" text="Enter Text" name="TextInput" is-delayed="true" class="input-field" style="display: none; margin-top: 7px; margin-bottom: 7px; max-width: 200px; flex-grow: 1;" />
+                                <ui:IntegerField value="0" name="IntInput" is-delayed="true" class="input-field" style="margin-top: 7px; margin-bottom: 7px; display: none; flex-grow: 1; max-width: 200px;" />
+                                <ui:FloatField value="0" name="DecimalInput" is-delayed="true" class="input-field" style="margin-bottom: 7px; margin-top: 7px; display: none; max-width: 200px; flex-grow: 1;" />
+                                <ui:DropdownField index="-1" name="Dropdown" style="flex-grow: 1; margin-top: 7px; margin-bottom: 7px; display: none; max-width: 200px;" />
                             </ui:VisualElement>
                         </ui:VisualElement>
                     </ui:VisualElement>

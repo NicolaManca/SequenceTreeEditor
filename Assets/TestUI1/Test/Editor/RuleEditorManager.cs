@@ -1,12 +1,15 @@
+using ECARules4All;
 using ECARules4All.RuleEngine;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using Unity.VisualScripting;
+using UnityEditor.SearchService;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.UIElements;
+using UnityEngine.XR.Interaction.Toolkit.Examples.UIRule.Prefabs;
 
 public class RuleEditorManager
 {
@@ -26,6 +29,8 @@ public class RuleEditorManager
     static Dictionary<int, Dictionary<GameObject, string>> subjects = new();
     static Dictionary<int, VerbComposition> verbsItem = new();
     static Dictionary<string, List<ActionAttribute>> verbsString = new();
+    //Dictionary for the subject selected with all its state variables and the type
+    static Dictionary<string, (ECARules4AllType, Type)> stateVariables = new();
 
     //Selected
     static GameObject subjectSelected; //gameobject with the subject
@@ -33,6 +38,52 @@ public class RuleEditorManager
     static string subjectSelectedType; //e.g. ECALight, Character....
     static string verbSelectedString; //string with the verb
     static string VerbSelectedType;
+    static GameObject objectSelected;
+    static string objSelectedType;
+
+    public static Dictionary<string, Color> colorDict = new()
+    {
+        {"blue", Color.blue}, // 0xff1f77b4,
+        {"green", Color.green}, // 0xffd62728
+        {"red", Color.red}, // 0xff9467bd
+        {"purple", Color.magenta}, // 0xff9467bd
+        {"gray", Color.gray}, // 0xff7f7f7f
+        {"grey", Color.grey}, // 0xff7f7f7f
+        {"yellow", Color.yellow}, // 0xffbcbd22
+        {"cyan", Color.cyan}, // 0xff17becf
+        {"white", Color.white}, // 0xffffffff
+    };
+    public static Dictionary<string, string> colorDictHex = new()
+    {
+        {"blue", "#1f77b4ff"},
+        {"orange", "#ff7f0eff"},
+        {"green", "#d62728ff"},
+        {"red", "#9467bdff"},
+        {"purple", "#9467bdff"},
+        {"brown", "#8c564bff"},
+        {"pink", "#e377c2ff"},
+        {"gray", "#7f7f7fff"},
+        {"grey", "#7f7f7fff"},
+        {"yellow", "#bcbd22ff"},
+        {"cyan", "#bcbd22ff"},
+        {"white", "#ffffffff"},
+    };
+    public static Dictionary<Color, string> reversedColorDict = new()
+    {
+       // { UIColors.blue, "blue" }, // 0xff1f77b4,
+        {UIColors.orange, "orange"}, // 0xffff7f0e
+        {UIColors.green, "green"}, // 0xffd62728
+        {UIColors.red, "red"}, // 0xff9467bd
+        {UIColors.purple, "purple"}, // 0xff9467bd
+        {UIColors.brown, "brown"}, // 0xff8c564b
+        {UIColors.pink, "pink"}, // 0xffe377c2
+        {UIColors.gray, "gray"}, // 0xff7f7f7f
+        {UIColors.grey, "grey"}, // 0xff7f7f7f
+        {UIColors.yellow, "yellow"}, // 0xffbcbd22
+        {UIColors.cyan, "cyan"}, // 0xff17becf
+        {UIColors.white, "white"}, // 0xffffffff
+    };
+
 
 
     public static void SetUpEventDropdownMenus(VisualElement eventPart)
@@ -60,11 +111,10 @@ public class RuleEditorManager
         //object without the value e.g. looks at gameobject
         objectDrop.RegisterValueChangedCallback(delegate { DropdownValueChangedObject(objectDrop); });
         //object with the value e.g. changes "active" ...
-        valueDrop.RegisterValueChangedCallback(delegate { DropdownValueChangedObjectValue(valueDrop); });
+        objectVerbDrop.RegisterValueChangedCallback(delegate { DropdownValueChangedObjectValue(objectVerbDrop); });
 
 
         SetUpSubject(subjectDrop);
-        //SetUpVerb(verbDrop);
     }
 
 
@@ -168,7 +218,7 @@ public class RuleEditorManager
             ActionAttribute ac = actionAttributes[0];
             if (ac.ObjectType != null)
             {
-                Debug.Log(ac.ObjectType.Name);
+                //Debug.Log(ac.ObjectType.Name);
                 VerbSelectedType = ac.ObjectType.Name;
 
                 switch (ac.ObjectType.Name)
@@ -226,13 +276,13 @@ public class RuleEditorManager
                         ActivateInputField("string");
                         break;
                     case "Rotation":
-                        valueDrop.style.display = DisplayStyle.Flex;
-                        valueDrop.choices.Clear();
-                        valueDrop.choices.Add("<no-value>");
-                        valueDrop.choices.Add("x");
-                        valueDrop.choices.Add("y");
-                        valueDrop.choices.Add("z");
-                        valueDrop.SetValueWithoutNotify("<no-value>");
+                        objectVerbDrop.style.display = DisplayStyle.Flex;
+                        objectVerbDrop.choices.Clear();
+                        objectVerbDrop.choices.Add("<no-value>");
+                        objectVerbDrop.choices.Add("x");
+                        objectVerbDrop.choices.Add("y");
+                        objectVerbDrop.choices.Add("z");
+                        objectVerbDrop.SetValueWithoutNotify("<no-value>");
                         break;
                     case "Int32":
                         ActivateInputField("integer");
@@ -268,10 +318,10 @@ public class RuleEditorManager
             //value e.g. increases intensity
             else if (ac.ValueType != null)
             {
-                valueDrop.style.display = DisplayStyle.Flex;
-                valueDrop.choices.Clear();
-                valueDrop.choices.Add("<no-value>");
-                valueDrop.choices.Add(ac.variableName);
+                objectVerbDrop.style.display = DisplayStyle.Flex;
+                objectVerbDrop.choices.Clear();
+                objectVerbDrop.choices.Add("<no-value>");
+                objectVerbDrop.choices.Add(ac.variableName);
             }
         }
         //in the else case, the sentence is composed only of two words (e.g. vehicle starts)
@@ -283,32 +333,140 @@ public class RuleEditorManager
         else
         {
             VerbSelectedType = null;
-            valueDrop.choices.Clear();
-            valueDrop.choices.Add("<no-value>");
+            objectVerbDrop.choices.Clear();
+            objectVerbDrop.choices.Add("<no-value>");
             foreach (var ac in actionAttributes)
             {
                 if (ac.ValueType != null)
                 {
-                    valueDrop.style.display = DisplayStyle.Flex;
+                    objectVerbDrop.style.display = DisplayStyle.Flex;
                     // objValueDrop.options.Add(new Dropdown.OptionData(ac.variableName));
                     entries.Add(ac.variableName);
                 }
             }
             entries.Sort();
-            valueDrop.choices = entries;
-            valueDrop.SetValueWithoutNotify("<no-value>");
+            objectVerbDrop.choices = entries;
+            objectVerbDrop.SetValueWithoutNotify("<no-value>");
         }
     }
-
-    static void DropdownValueChangedObjectValue(DropdownField valueDrop)
-    {
-        throw new NotImplementedException();
-    }
-
+    
     static void DropdownValueChangedObject(DropdownField objectDrop)
     {
-        throw new NotImplementedException();
+        //Debug.Log("Called ChangedObjectValue");
+        DisableNextComponent("object");
+        //retrieve selected string and gameobject
+        var objSelectedString = objectDrop.value;
+
+
+        string selectedCutString = Regex.Match(objSelectedString, "[^ ]* (.*)").Groups[1].Value;
+        //The object selected is a GameObject
+        if (GameObject.Find(selectedCutString) != null)
+        {
+            previousSelectedObject = objectSelected;
+            objectSelected = GameObject.Find(selectedCutString);
+        }
+        else objectSelected = null;
     }
+
+    static void DropdownValueChangedObjectValue(DropdownField objectVerbDrop)
+    {
+        DisableNextComponent("object");
+        //retrieve selected string and gameobject
+        var objSelectedString = objectVerbDrop.value;
+        //Debug.Log($"Called ChangedObjectValue: {objSelectedString}");
+        objectSelected = null;
+
+        prepDrop.style.display = DisplayStyle.Flex;
+
+        //retrieve action attributes
+        verbsString = RuleUtils.PopulateVerbsString(verbsItem);
+        List<ActionAttribute> actionAttributes = verbsString[verbSelectedString];
+        valueDrop.choices.Clear();
+
+        stateVariables = RuleUtils.FindStateVariables(subjectSelected);
+        foreach (var ac in actionAttributes)
+        {
+            // Used to sort each dropdown's options
+            List<string> entries = new List<string>();
+
+            if (ac.ObjectType == typeof(Rotation))
+            {
+                ActivateInputField("decimal");
+                prepDrop.style.display = DisplayStyle.None;
+                objSelectedType = "Rotation";
+                return;
+            }
+
+            if (ac.variableName == objSelectedString)
+            {
+                prepDrop.choices.Add(ac.ModifierString);
+                prepDrop.SetValueWithoutNotify(ac.ModifierString);
+                objSelectedType = ac.ValueType.Name;
+
+                switch (ac.ValueType.Name)
+                {
+                    case "YesNo":
+                        valueDrop.style.display = DisplayStyle.Flex;
+                        entries.Add("<no-value>");
+                        entries.Add("yes");
+                        entries.Add("no");
+                        break;
+                    case "TrueFalse":
+                        valueDrop.style.display = DisplayStyle.Flex;
+                        entries.Add("<no-value>");
+                        entries.Add("true");
+                        entries.Add("false");
+                        break;
+                    case "OnOff":
+                        valueDrop.style.display = DisplayStyle.Flex;
+                        entries.Add("<no-value>");
+                        entries.Add("on");
+                        entries.Add("off");
+                        break;
+                    case "String":
+                        if (objSelectedString == "mesh")
+                        {
+                            valueDrop.style.display = DisplayStyle.Flex;
+                            entries.Add("<no-value>");
+                            foreach (var mesh in UIManager.items)
+                                entries.Add(mesh);
+                        }
+                        else ActivateInputField("alphanumeric");
+                        break;
+
+                    case "ECAColor":
+                        valueDrop.style.display = DisplayStyle.Flex;
+                        entries.Add("<no-value>");
+                        // Add colors to dropdown
+                        foreach (KeyValuePair<string, Color> kvp in colorDict)
+                            entries.Add(kvp.Key);
+                        break;
+
+                    case "Single":
+                    case "Double":
+                        ActivateInputField("decimal");
+                        break;
+
+                    case "Int32":
+                        ActivateInputField("Integer");
+                        break;
+                    //TODO optimize
+                    case "POV":
+                        valueDrop.style.display = DisplayStyle.Flex;
+                        entries.Add("<no-value>");
+                        entries.Add("First");
+                        entries.Add("Third");
+                        break;
+                }
+                entries.Sort();
+                valueDrop.choices = entries;
+                valueDrop.SetValueWithoutNotify("<no-value>");
+                return;
+            }
+        }
+
+    }
+
 
 
 
@@ -348,15 +506,21 @@ public class RuleEditorManager
                 objectDrop.style.display = DisplayStyle.None;
                 valueDrop.style.display = DisplayStyle.None;
                 textField.style.display = DisplayStyle.None;
+                intField.style.display = DisplayStyle.None;
+                decimalField.style.display = DisplayStyle.None;
                 inputDrop.style.display = DisplayStyle.None;
                 break;
             // Change verb
             case "verb":
+                objectVerbDrop.style.display = DisplayStyle.None;
+
                 prefixThe.style.display = DisplayStyle.None;
                 prepDrop.style.display = DisplayStyle.None;
                 objectDrop.style.display = DisplayStyle.None;
                 valueDrop.style.display = DisplayStyle.None;
                 textField.style.display = DisplayStyle.None;
+                intField.style.display = DisplayStyle.None;
+                decimalField.style.display = DisplayStyle.None;
                 inputDrop.style.display = DisplayStyle.None;
                 break;
             // Change object

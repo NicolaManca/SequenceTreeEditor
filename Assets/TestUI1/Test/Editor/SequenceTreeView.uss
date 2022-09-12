@@ -26,3 +26,10 @@ DropdownField > Label {
     margin-top: 0;
     margin-bottom: 0;
 }
+
+.input-field TextElement {
+    -unity-text-align: middle-center;
+}
+
+.input-field {
+}
