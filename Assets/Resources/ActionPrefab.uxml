@@ -21,7 +21,7 @@
             </ui:VisualElement>
         </ui:VisualElement>
         <ui:VisualElement name="Spacing" style="flex-grow: 1;" />
-        <ui:VisualElement name="RemoveButton" style="justify-content: center;">
+        <ui:VisualElement name="RemoveButton" style="justify-content: center; display: none;">
             <ui:Button tabindex="-1" text="Rmv" display-tooltip-when-elided="true" name="Button" />
         </ui:VisualElement>
     </ui:VisualElement>

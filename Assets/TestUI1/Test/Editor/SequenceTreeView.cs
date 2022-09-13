@@ -81,23 +81,21 @@ public class SequenceTreeView : NodesWindow
         m_RuleEditorContainer = rootVisualElement.Q<VisualElement>("RuleEditorContainer");
         m_RuleEditorContainer.SetEnabled(false);
         var ruleEditor = m_RuleEditorContainer.Q<VisualElement>("RuleEditor");
-        m_RuleEditorManager = new(ruleEditor);
+        RuleEditorManager.SetupManager(ruleEditor);
+        
+
+
+
+        m_RuleEditorManager = new();
         m_RuleEditorManager.SetUpEventDropdownMenus();
-        /*
-        var actionPart = RuleEditorManager.ActionsContainer.Q<ScrollView>("ActionsSV")
-            .Q<VisualElement>("unity-content-container").Q<VisualElement>("ActionInit");
-        m_RuleEditorManager.SetUpActionDropdownMenus(actionPart);
-        */
-
-
-
 
         //Setup RuleEditor Toolbar Menu
-        var ruleInspTbMenu = rootVisualElement.Q<ToolbarMenu>("AddMenu");
-        var ruleInspDiscardB = rootVisualElement.Q<ToolbarButton>("DiscardButton");
-        var ruleInspSaveB = rootVisualElement.Q<ToolbarButton>("SaveButton");
-        ruleInspTbMenu.menu.AppendAction("Add Action", a => { m_RuleEditorManager.AddAction(); }, DropdownMenuAction.AlwaysEnabled);
-        ruleInspTbMenu.menu.AppendAction("Add Condition", a => { m_RuleEditorManager.AddCondition(); }, DropdownMenuAction.AlwaysEnabled);
+        var addActionBtn = rootVisualElement.Q<ToolbarButton>("AddActionButton");
+        var addConditionBtn = rootVisualElement.Q<ToolbarButton>("AddConditionButton");
+        var discardBtn = rootVisualElement.Q<ToolbarButton>("DiscardButton");
+        var saveBtn = rootVisualElement.Q<ToolbarButton>("SaveButton");
+        addActionBtn.clickable = new Clickable(() => { m_RuleEditorManager.AddAction(); });
+        addConditionBtn.clickable = new Clickable(() => { m_RuleEditorManager.AddCondition(); });
     }
 
 
