@@ -383,7 +383,6 @@ FodyWeavers.xsd
 /Assets/ECAObjectXRLoader.cs
 /Assets/TestUI1/Example/Editor
 /Assets/Prefabs
-/Assets/Resources
 /Assets/Scripts/Editor
 /Assets/Scripts/First person controller/Scripts
 /Assets/Scripts/XR Interaction Toolkit/1.0.0-pre.2/Default Input Actions
@@ -400,3 +399,6 @@ FodyWeavers.xsd
 /Assets/UI/AnyUI
 /ProjectSettings
 /Temp
+/Assets/Resources/Rule.prefab
+/Assets/Resources/Particles
+/Assets/Resources/Inventory/Meshes

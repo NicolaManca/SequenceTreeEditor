@@ -1,13 +1,13 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="True">
     <Style src="project://database/Assets/TestUI1/Test/Editor/SequenceTreeView.uss?fileID=7433441132597879392&amp;guid=ffc9f48c1da3b8645979cb759602e9ab&amp;type=3#SequenceTreeView" />
-    <SplitView orientation="Vertical" fixed-pane-initial-dimension="171" name="SplitView">
+    <SplitView orientation="Vertical" fixed-pane-initial-dimension="200" name="SplitView">
         <ui:VisualElement name="TreeViewContainer">
             <uie:Toolbar name="TreeViewToolbar" style="background-color: rgb(60, 60, 60);">
                 <uie:ToolbarMenu tabindex="-1" display-tooltip-when-elided="false" text="Add Node" name="AddNodeMenu" />
             </uie:Toolbar>
             <ui:TreeView fixed-item-height="20" name="TreeView" style="background-color: rgb(48, 48, 48); flex-grow: 1;" />
         </ui:VisualElement>
-        <ui:VisualElement name="RuleEditorContainer">
+        <ui:VisualElement name="RuleEditorContainer" style="min-height: 250px;">
             <uie:Toolbar name="RuleEditorToolbar">
                 <uie:ToolbarMenu tabindex="-1" display-tooltip-when-elided="true" text="+" name="AddMenu" style="font-size: 26px;" />
                 <uie:ToolbarSpacer name="Spacer" style="flex-grow: 1;" />
@@ -19,10 +19,10 @@
                     <ui:VisualElement name="Event" style="min-height: 50px;">
                         <ui:Label tabindex="-1" text="When" display-tooltip-when-elided="true" name="EventLabel" style="-unity-text-align: middle-center; -unity-font-style: bold; font-size: 14px; padding-left: 15px; padding-right: 15px; padding-top: 2px; padding-bottom: 2px; background-color: rgb(30, 30, 30); min-height: 50px;" />
                     </ui:VisualElement>
-                    <ui:VisualElement name="Conditions" style="flex-grow: 1; max-height: 150px;">
+                    <ui:VisualElement name="Conditions" style="flex-grow: 1; max-height: 150px; display: none;">
                         <ui:Label tabindex="-1" text="If" display-tooltip-when-elided="true" name="ConditionsLabel" style="-unity-text-align: middle-center; -unity-font-style: bold; font-size: 14px; padding-left: 15px; padding-right: 15px; padding-top: 2px; padding-bottom: 2px; background-color: rgb(30, 30, 30); min-height: 50px;" />
                     </ui:VisualElement>
-                    <ui:VisualElement name="Actions" style="min-width: auto; min-height: auto; flex-grow: 1;">
+                    <ui:VisualElement name="Actions" style="flex-grow: 1;">
                         <ui:Label tabindex="-1" text="Then" display-tooltip-when-elided="true" name="ActionsLabel" style="-unity-text-align: middle-center; -unity-font-style: bold; font-size: 14px; padding-left: 15px; padding-right: 15px; padding-top: 2px; padding-bottom: 2px; background-color: rgb(30, 30, 30); min-height: 50px;" />
                     </ui:VisualElement>
                 </ui:VisualElement>
@@ -36,7 +36,7 @@
                             <ui:DropdownField index="-1" name="Verb" style="margin-top: 7px; margin-bottom: 7px; display: none; max-width: 200px; min-width: 100px;" />
                             <ui:DropdownField index="-1" name="ObjectVerb" style="flex-grow: 1; margin-top: 7px; margin-bottom: 7px; display: none; max-width: 200px; min-width: 100px;" />
                         </ui:VisualElement>
-                        <ui:VisualElement name="ObjectC" style="flex-direction: row; flex-grow: 1;">
+                        <ui:VisualElement name="ObjectC" style="flex-direction: row; flex-grow: 0; flex-shrink: 1;">
                             <ui:Label tabindex="-1" text="The" display-tooltip-when-elided="true" name="PrefixThe" style="-unity-text-align: middle-center; display: none;" />
                             <ui:DropdownField index="-1" name="Prep" style="margin-top: 7px; margin-bottom: 7px; display: none; max-width: 200px; min-width: 100px;" />
                             <ui:DropdownField index="-1" name="Object" style="margin-top: 7px; margin-bottom: 7px; display: none; max-width: 200px; min-width: 100px;" />
@@ -49,8 +49,36 @@
                             </ui:VisualElement>
                         </ui:VisualElement>
                     </ui:VisualElement>
-                    <ui:VisualElement name="Conditions" style="flex-grow: 1; max-height: 150px;">
+                    <ui:VisualElement name="Conditions" style="flex-grow: 1; max-height: 150px; min-height: 150px; display: none;">
                         <ui:ScrollView name="ConditionsSV" style="flex-grow: 1;" />
+                    </ui:VisualElement>
+                    <ui:VisualElement name="Actions" style="flex-grow: 1; min-height: 150px;">
+                        <ui:ScrollView name="ActionsSV">
+                            <ui:VisualElement name="ActionInit">
+                                <ui:VisualElement name="Action" style="flex-direction: row; min-height: 50px; max-height: 50px;">
+                                    <ui:VisualElement name="SubjectC" style="flex-direction: row;">
+                                        <ui:Label tabindex="-1" text="The" display-tooltip-when-elided="true" name="PrefixThe" style="-unity-font-style: bold; -unity-text-align: middle-center;" />
+                                        <ui:DropdownField index="-1" name="Subject" style="margin-top: 7px; margin-bottom: 7px; max-width: 200px; min-width: 100px;" />
+                                    </ui:VisualElement>
+                                    <ui:VisualElement name="VerbC" style="flex-direction: row;">
+                                        <ui:DropdownField index="-1" name="Verb" style="margin-top: 7px; margin-bottom: 7px; display: none; max-width: 200px; min-width: 100px;" />
+                                        <ui:DropdownField index="-1" name="ObjectVerb" style="flex-grow: 1; margin-top: 7px; margin-bottom: 7px; display: none; max-width: 200px; min-width: 100px;" />
+                                    </ui:VisualElement>
+                                    <ui:VisualElement name="ObjectC" style="flex-direction: row;">
+                                        <ui:Label tabindex="-1" text="The" display-tooltip-when-elided="true" name="PrefixThe" style="-unity-text-align: middle-center; display: none;" />
+                                        <ui:DropdownField index="-1" name="Prep" style="margin-top: 7px; margin-bottom: 7px; display: none; max-width: 200px; min-width: 100px;" />
+                                        <ui:DropdownField index="-1" name="Object" style="margin-top: 7px; margin-bottom: 7px; display: none; max-width: 200px; min-width: 100px;" />
+                                        <ui:DropdownField index="-1" name="Value" style="margin-top: 7px; margin-bottom: 7px; display: none; max-width: 200px; min-width: 100px;" />
+                                        <ui:VisualElement name="InputField" style="flex-direction: row;">
+                                            <ui:TextField picking-mode="Ignore" value="filler text" text="Enter Text" name="TextInput" is-delayed="true" class="input-field" style="display: none; margin-top: 7px; margin-bottom: 7px; max-width: 200px; min-width: 100px;" />
+                                            <ui:IntegerField value="0" name="IntInput" is-delayed="true" class="input-field" style="margin-top: 7px; margin-bottom: 7px; display: none; max-width: 200px; min-width: 100px;" />
+                                            <ui:FloatField value="0" name="DecimalInput" is-delayed="true" class="input-field" style="margin-bottom: 7px; margin-top: 7px; display: none; max-width: 200px; min-width: 100px;" />
+                                            <ui:DropdownField index="-1" name="Dropdown" style="margin-top: 7px; margin-bottom: 7px; display: none; max-width: 200px; min-width: 100px;" />
+                                        </ui:VisualElement>
+                                    </ui:VisualElement>
+                                </ui:VisualElement>
+                            </ui:VisualElement>
+                        </ui:ScrollView>
                     </ui:VisualElement>
                 </ui:VisualElement>
             </ui:VisualElement>

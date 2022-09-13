@@ -20,7 +20,7 @@ public class SequenceTreeView : NodesWindow
     private TreeView m_TreeView;
     private VisualElement m_RuleEditorContainer;
 
-    private RuleEditorManager m_RuleEditorManager = new();
+    private RuleEditorManager m_RuleEditorManager;
 
     [MenuItem("Sequence/Sequence Tree")]
     static void Summon()
@@ -33,18 +33,11 @@ public class SequenceTreeView : NodesWindow
         m_Id = 0;
         uxml.CloneTree(rootVisualElement);
 
-
+        //Setup TreeView Toolbar Menu
         var treeTbMenu = rootVisualElement.Q<ToolbarMenu>("AddNodeMenu");
         treeTbMenu.menu.AppendAction("Add Sequence Node", a => { AddNodeToSelection("sequence"); }, UpdateActionMenuStatus);
         treeTbMenu.menu.AppendAction("Add Parallel Node", a => { AddNodeToSelection("parallel"); }, UpdateActionMenuStatus);
         treeTbMenu.menu.AppendAction("Add Leaf Node", a => { AddNodeToSelection("leaf"); }, UpdateActionMenuStatus);
-
-        var ruleInspTbMenu = rootVisualElement.Q<ToolbarMenu>("AddMenu");
-        var ruleInspDiscardB = rootVisualElement.Q<ToolbarButton>("DiscardButton");
-        var ruleInspSaveB = rootVisualElement.Q<ToolbarButton>("SaveButton");
-        ruleInspTbMenu.menu.AppendAction("Add Action", a => { Debug.Log("Add Action Clicked"); }, a => DropdownMenuAction.Status.Normal);
-        ruleInspTbMenu.menu.AppendAction("Add Condition", a => { Debug.Log("Add Condition Clicked"); }, action => DropdownMenuAction.Status.Normal);
-
 
         m_TreeView = rootVisualElement.Q<TreeView>();
 
@@ -87,14 +80,25 @@ public class SequenceTreeView : NodesWindow
 
         m_RuleEditorContainer = rootVisualElement.Q<VisualElement>("RuleEditorContainer");
         m_RuleEditorContainer.SetEnabled(false);
-        var RuleEditor = m_RuleEditorContainer.Q<VisualElement>("RuleEditor");
-        var eventPart = RuleEditor.Q<VisualElement>("RuleParts").Q<VisualElement>("Event");
-        m_RuleEditorManager.SetUpEventDropdownMenus(eventPart);
+        var ruleEditor = m_RuleEditorContainer.Q<VisualElement>("RuleEditor");
+        m_RuleEditorManager = new(ruleEditor);
+        m_RuleEditorManager.SetUpEventDropdownMenus();
+        var actionPart = m_RuleEditorManager.ActionsContainer.Q<ScrollView>("ActionsSV")
+            .Q<VisualElement>("unity-content-container").Q<VisualElement>("ActionInit");
+        m_RuleEditorManager.SetUpActionDropdownMenus(actionPart);
 
 
+
+
+        //Setup RuleEditor Toolbar Menu
+        var ruleInspTbMenu = rootVisualElement.Q<ToolbarMenu>("AddMenu");
+        var ruleInspDiscardB = rootVisualElement.Q<ToolbarButton>("DiscardButton");
+        var ruleInspSaveB = rootVisualElement.Q<ToolbarButton>("SaveButton");
+        ruleInspTbMenu.menu.AppendAction("Add Action", a => { m_RuleEditorManager.AddAction(); }, DropdownMenuAction.AlwaysEnabled);
+        ruleInspTbMenu.menu.AppendAction("Add Condition", a => { m_RuleEditorManager.AddCondition(); }, DropdownMenuAction.AlwaysEnabled);
     }
 
-    
+
 
 
 

@@ -1,27 +1,86 @@
 using ECARules4All;
 using ECARules4All.RuleEngine;
+using PlasticGui.Help.Conditions;
 using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
-using System.Xml;
+using UnityEditor;
 using UnityEngine;
-using UnityEngine.UI;
 using UnityEngine.UIElements;
 using UnityEngine.XR.Interaction.Toolkit.Examples.UIRule.Prefabs;
-using static UnityEngine.Rendering.DebugUI;
-using static UnityEngine.Rendering.DebugUI.MessageBox;
 using FloatField = UnityEngine.UIElements.FloatField;
 
 public class RuleEditorManager
 {
+    public VisualElement EventContainer { get; set; }
+    public VisualElement ConditionsContainer { get; set; }
+    public VisualElement ActionsContainer { get; set; }
+
+    private VisualElement conditionHeader;  
+
     public ActionDropdownsManager eventManager = new();
+    public List<ConditionDropdownsManager> conditionsManager = new();
+    public List<ActionDropdownsManager> actionsManager = new();
 
+    private readonly VisualTreeAsset m_ActionPrefabUxml = Resources.Load<VisualTreeAsset>("ActionPrefab");
+    private readonly VisualTreeAsset m_ConditionPrefabUxml = Resources.Load<VisualTreeAsset>("ConditionPrefab");
 
-    public void SetUpEventDropdownMenus(VisualElement eventContainer)
+    public RuleEditorManager(VisualElement ruleEditor)
     {
-        eventManager.SetUpDropdownMenus(eventContainer);
+        this.EventContainer = ruleEditor.Q<VisualElement>("RuleParts").Q<VisualElement>("Event");
+
+        this.ConditionsContainer = ruleEditor.Q<VisualElement>("RuleParts").Q<VisualElement>("Conditions");
+        this.conditionHeader = ruleEditor.Q<VisualElement>("Headers").Q<VisualElement>("Conditions");
+
+        this.ActionsContainer = ruleEditor.Q<VisualElement>("RuleParts").Q<VisualElement>("Actions");
     }
+
+    public void SetUpEventDropdownMenus()
+    {
+        eventManager.SetUpDropdownMenus(EventContainer);
+    }
+    public void SetUpActionDropdownMenus(VisualElement actionContainer)
+    {
+        var actionManager = new ActionDropdownsManager();
+        actionsManager.Add(actionManager);
+        actionManager.SetUpDropdownMenus(actionContainer);
+    }
+
+    public void AddAction()
+    {
+        VisualElement actionPrefab = m_ActionPrefabUxml.CloneTree();
+
+        var actionManager = new ActionDropdownsManager();
+        actionsManager.Add(actionManager);
+        actionManager.SetUpDropdownMenus(actionPrefab);
+
+        ActionsContainer.Q<ScrollView>("ActionsSV").Add(actionPrefab);
+    }
+    public void AddCondition()
+    {
+        VisualElement conditionPrefab = m_ConditionPrefabUxml.CloneTree();
+
+        var conditionManager = new ConditionDropdownsManager();
+        conditionsManager.Add(conditionManager);
+        conditionManager.SetUpDropdownMenus(conditionPrefab);
+
+        var conditionsSV = ConditionsContainer.Q<ScrollView>("ConditionsSV");
+
+        if (conditionsSV.childCount == 0)
+        {
+            conditionHeader.style.display = DisplayStyle.Flex;
+            ConditionsContainer.style.display = DisplayStyle.Flex;
+        }
+            
+        conditionsSV.Add(conditionPrefab);
+    }
+
+
 }
+
+
+
+
 
 public class ActionDropdownsManager
 {
