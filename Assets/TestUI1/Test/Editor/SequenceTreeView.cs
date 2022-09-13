@@ -83,9 +83,11 @@ public class SequenceTreeView : NodesWindow
         var ruleEditor = m_RuleEditorContainer.Q<VisualElement>("RuleEditor");
         m_RuleEditorManager = new(ruleEditor);
         m_RuleEditorManager.SetUpEventDropdownMenus();
-        var actionPart = m_RuleEditorManager.ActionsContainer.Q<ScrollView>("ActionsSV")
+        /*
+        var actionPart = RuleEditorManager.ActionsContainer.Q<ScrollView>("ActionsSV")
             .Q<VisualElement>("unity-content-container").Q<VisualElement>("ActionInit");
         m_RuleEditorManager.SetUpActionDropdownMenus(actionPart);
+        */
 
 
 

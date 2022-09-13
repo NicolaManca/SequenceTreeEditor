@@ -53,32 +53,7 @@
                         <ui:ScrollView name="ConditionsSV" style="flex-grow: 1;" />
                     </ui:VisualElement>
                     <ui:VisualElement name="Actions" style="flex-grow: 1; min-height: 150px;">
-                        <ui:ScrollView name="ActionsSV">
-                            <ui:VisualElement name="ActionInit">
-                                <ui:VisualElement name="Action" style="flex-direction: row; min-height: 50px; max-height: 50px;">
-                                    <ui:VisualElement name="SubjectC" style="flex-direction: row;">
-                                        <ui:Label tabindex="-1" text="The" display-tooltip-when-elided="true" name="PrefixThe" style="-unity-font-style: bold; -unity-text-align: middle-center;" />
-                                        <ui:DropdownField index="-1" name="Subject" style="margin-top: 7px; margin-bottom: 7px; max-width: 200px; min-width: 100px;" />
-                                    </ui:VisualElement>
-                                    <ui:VisualElement name="VerbC" style="flex-direction: row;">
-                                        <ui:DropdownField index="-1" name="Verb" style="margin-top: 7px; margin-bottom: 7px; display: none; max-width: 200px; min-width: 100px;" />
-                                        <ui:DropdownField index="-1" name="ObjectVerb" style="flex-grow: 1; margin-top: 7px; margin-bottom: 7px; display: none; max-width: 200px; min-width: 100px;" />
-                                    </ui:VisualElement>
-                                    <ui:VisualElement name="ObjectC" style="flex-direction: row;">
-                                        <ui:Label tabindex="-1" text="The" display-tooltip-when-elided="true" name="PrefixThe" style="-unity-text-align: middle-center; display: none;" />
-                                        <ui:DropdownField index="-1" name="Prep" style="margin-top: 7px; margin-bottom: 7px; display: none; max-width: 200px; min-width: 100px;" />
-                                        <ui:DropdownField index="-1" name="Object" style="margin-top: 7px; margin-bottom: 7px; display: none; max-width: 200px; min-width: 100px;" />
-                                        <ui:DropdownField index="-1" name="Value" style="margin-top: 7px; margin-bottom: 7px; display: none; max-width: 200px; min-width: 100px;" />
-                                        <ui:VisualElement name="InputField" style="flex-direction: row;">
-                                            <ui:TextField picking-mode="Ignore" value="filler text" text="Enter Text" name="TextInput" is-delayed="true" class="input-field" style="display: none; margin-top: 7px; margin-bottom: 7px; max-width: 200px; min-width: 100px;" />
-                                            <ui:IntegerField value="0" name="IntInput" is-delayed="true" class="input-field" style="margin-top: 7px; margin-bottom: 7px; display: none; max-width: 200px; min-width: 100px;" />
-                                            <ui:FloatField value="0" name="DecimalInput" is-delayed="true" class="input-field" style="margin-bottom: 7px; margin-top: 7px; display: none; max-width: 200px; min-width: 100px;" />
-                                            <ui:DropdownField index="-1" name="Dropdown" style="margin-top: 7px; margin-bottom: 7px; display: none; max-width: 200px; min-width: 100px;" />
-                                        </ui:VisualElement>
-                                    </ui:VisualElement>
-                                </ui:VisualElement>
-                            </ui:VisualElement>
-                        </ui:ScrollView>
+                        <ui:ListView focusable="true" name="ActionsLV" virtualization-method="DynamicHeight" style="flex-grow: 1; min-height: auto;" />
                     </ui:VisualElement>
                 </ui:VisualElement>
             </ui:VisualElement>

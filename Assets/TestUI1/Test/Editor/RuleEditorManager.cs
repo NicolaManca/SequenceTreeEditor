@@ -4,35 +4,54 @@ using PlasticGui.Help.Conditions;
 using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
+using Unity.VisualScripting;
 using UnityEditor;
+using UnityEditor.IMGUI.Controls;
 using UnityEngine;
 using UnityEngine.UIElements;
 using UnityEngine.XR.Interaction.Toolkit.Examples.UIRule.Prefabs;
+using Action = ECARules4All.RuleEngine.Action;
 using FloatField = UnityEngine.UIElements.FloatField;
 
 public class RuleEditorManager
 {
-    public VisualElement EventContainer { get; set; }
-    public VisualElement ConditionsContainer { get; set; }
-    public VisualElement ActionsContainer { get; set; }
+    public static VisualElement EventContainer { get; set; }
+    public static VisualElement ConditionsContainer { get; set; }
+    public static VisualElement ActionsContainer { get; set; }
 
     private VisualElement conditionHeader;  
 
-    public ActionDropdownsManager eventManager = new();
-    public List<ConditionDropdownsManager> conditionsManager = new();
-    public List<ActionDropdownsManager> actionsManager = new();
+    private static ActionDropdownsManager eventManager = new();
+    private static List<ConditionDropdownsManager> conditionManagers = new();
+    private static List<ActionDropdownsManager> actionManagers = new();
+    private static List<Action> actions = new();
 
     private readonly VisualTreeAsset m_ActionPrefabUxml = Resources.Load<VisualTreeAsset>("ActionPrefab");
     private readonly VisualTreeAsset m_ConditionPrefabUxml = Resources.Load<VisualTreeAsset>("ConditionPrefab");
 
     public RuleEditorManager(VisualElement ruleEditor)
     {
-        this.EventContainer = ruleEditor.Q<VisualElement>("RuleParts").Q<VisualElement>("Event");
+        EventContainer = ruleEditor.Q<VisualElement>("RuleParts").Q<VisualElement>("Event");
 
-        this.ConditionsContainer = ruleEditor.Q<VisualElement>("RuleParts").Q<VisualElement>("Conditions");
+        ConditionsContainer = ruleEditor.Q<VisualElement>("RuleParts").Q<VisualElement>("Conditions");
         this.conditionHeader = ruleEditor.Q<VisualElement>("Headers").Q<VisualElement>("Conditions");
 
-        this.ActionsContainer = ruleEditor.Q<VisualElement>("RuleParts").Q<VisualElement>("Actions");
+        ActionsContainer = ruleEditor.Q<VisualElement>("RuleParts").Q<VisualElement>("Actions");
+        ActionsContainer.Q<ListView>("ActionsLV").itemsSource = new List<Action>() { new Action() };
+
+        ActionsContainer.Q<ListView>("ActionsLV").makeItem = () =>
+        {
+            return m_ActionPrefabUxml.CloneTree();
+        };
+
+        ActionsContainer.Q<ListView>("ActionsLV").bindItem = (VisualElement element, int index) =>
+        {
+            element.userData = index;
+            var actionManager = new ActionDropdownsManager();
+            actionManagers.Add(actionManager);
+            actionManager.SetUpDropdownMenus(element);
+        };
+
     }
 
     public void SetUpEventDropdownMenus()
@@ -42,7 +61,7 @@ public class RuleEditorManager
     public void SetUpActionDropdownMenus(VisualElement actionContainer)
     {
         var actionManager = new ActionDropdownsManager();
-        actionsManager.Add(actionManager);
+        actionManagers.Add(actionManager);
         actionManager.SetUpDropdownMenus(actionContainer);
     }
 
@@ -51,30 +70,39 @@ public class RuleEditorManager
         VisualElement actionPrefab = m_ActionPrefabUxml.CloneTree();
 
         var actionManager = new ActionDropdownsManager();
-        actionsManager.Add(actionManager);
-        actionManager.SetUpDropdownMenus(actionPrefab);
+        actionManagers.Add(actionManager);
+        actionManager.SetUpDropdownMenus(actionPrefab, true);
 
         ActionsContainer.Q<ScrollView>("ActionsSV").Add(actionPrefab);
     }
     public void AddCondition()
     {
+        var conditionsSV = ConditionsContainer.Q<ScrollView>("ConditionsSV");
         VisualElement conditionPrefab = m_ConditionPrefabUxml.CloneTree();
 
         var conditionManager = new ConditionDropdownsManager();
-        conditionsManager.Add(conditionManager);
-        conditionManager.SetUpDropdownMenus(conditionPrefab);
-
-        var conditionsSV = ConditionsContainer.Q<ScrollView>("ConditionsSV");
+        conditionManagers.Add(conditionManager);
 
         if (conditionsSV.childCount == 0)
         {
             conditionHeader.style.display = DisplayStyle.Flex;
             ConditionsContainer.style.display = DisplayStyle.Flex;
         }
+        else
+        {
+            conditionPrefab.Q<VisualElement>("ToCheckC").Q<DropdownField>("AndOr").style.display = DisplayStyle.Flex;
+        }
+
+        conditionManager.SetUpDropdownMenus(conditionPrefab);
             
         conditionsSV.Add(conditionPrefab);
     }
 
+    public static void RemoveAction(ActionDropdownsManager manager, VisualElement action)
+    {
+        actionManagers.Remove(manager);
+        ActionsContainer.Q<ScrollView>("ActionsSV").Remove(action);
+    }
 
 }
 
@@ -158,7 +186,7 @@ public class ActionDropdownsManager
     #endregion
 
 
-    public void SetUpDropdownMenus(VisualElement actionContainer)
+    public void SetUpDropdownMenus(VisualElement actionContainer, bool isPrefab = false)
     {
         var subjectPart = actionContainer.Q<VisualElement>("SubjectC");
         subjectDrop = subjectPart.Q<DropdownField>("Subject");
@@ -177,6 +205,12 @@ public class ActionDropdownsManager
         decimalField = objectPart.Q<VisualElement>("InputField").Q<FloatField>("DecimalInput");
         inputDrop = objectPart.Q<VisualElement>("InputField").Q<DropdownField>("Dropdown");
 
+        if (isPrefab)
+        {
+            var removeButton = actionContainer.Q<UnityEngine.UIElements.Button>("Button");
+            removeButton.clickable = new Clickable(evt => { RuleEditorManager.RemoveAction(this, actionContainer); });
+
+        }
 
         subjectDrop.RegisterValueChangedCallback(delegate { DropdownValueChangedSubject(subjectDrop); });
         verbDrop.RegisterValueChangedCallback(delegate { DropdownValueChangedVerb(verbDrop); });
@@ -646,6 +680,7 @@ public class ConditionDropdownsManager
         var toCheckPart = conditionContainer.Q<VisualElement>("ToCheckC");
         toCheckDrop = toCheckPart.Q<DropdownField>("ToCheck");
         andOrDrop = toCheckPart.Q<DropdownField>("AndOr");
+        andOrDrop.choices = new List<string>() { "And", "Or" };
 
         var propertyPart = conditionContainer.Q<VisualElement>("PropertyC");
         propertyDrop = propertyPart.Q<DropdownField>("Property");

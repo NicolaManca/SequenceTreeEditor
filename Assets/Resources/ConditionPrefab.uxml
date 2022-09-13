@@ -2,7 +2,7 @@
     <Style src="project://database/Assets/TestUI1/Test/Editor/SequenceTreeView.uss?fileID=7433441132597879392&amp;guid=ffc9f48c1da3b8645979cb759602e9ab&amp;type=3#SequenceTreeView" />
     <ui:VisualElement name="Condition" style="flex-direction: row; max-height: 50px; min-height: 50px;">
         <ui:VisualElement name="ToCheckC" style="flex-direction: row;">
-            <ui:DropdownField index="-1" choices="System.Collections.Generic.List`1[System.String]" name="AndOr" style="max-width: 100px; min-width: 100px; margin-top: 7px; margin-bottom: 7px; display: none;" />
+            <ui:DropdownField index="-1" name="AndOr" style="max-width: 70px; min-width: 70px; margin-top: 7px; margin-bottom: 7px; display: none; margin-right: 0;" />
             <ui:Label tabindex="-1" text="The" display-tooltip-when-elided="true" name="PrefixThe" style="-unity-font-style: bold; -unity-text-align: middle-left;" />
             <ui:DropdownField index="-1" name="ToCheck" style="max-width: 200px; min-width: 100px; margin-top: 7px; margin-bottom: 7px;" />
         </ui:VisualElement>
