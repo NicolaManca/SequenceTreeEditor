@@ -1103,6 +1103,7 @@ namespace ECARules4All.RuleEngine
         //Override vari per controllare l'uguaglianza tra Azioni
         public override bool Equals(object obj)
         {
+            if (obj == null) return false;
             return ActionEquals(obj as Action);
         }
 
@@ -1117,11 +1118,12 @@ namespace ECARules4All.RuleEngine
         }
 
         //TODO null action
+
         private bool ActionEquals(Action action)
         {
-            if (!a_subject.Equals(action.GetSubject()))
+            if (a_subject != null && !a_subject.Equals(action.GetSubject()))
                 return false;
-            if (!a_verb.Equals(action.GetActionMethod()))
+            if (a_verb != null && !a_verb.Equals(action.GetActionMethod()))
                 return false;
             if (a_object != null && !a_object.Equals(action.GetObject()))
                 return false;

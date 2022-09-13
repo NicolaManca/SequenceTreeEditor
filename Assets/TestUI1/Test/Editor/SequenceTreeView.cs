@@ -1,4 +1,5 @@
 using Antlr4.Runtime.Tree;
+using ECARules4All.RuleEngine;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,7 +10,7 @@ using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.UIElements;
-
+using Action = ECARules4All.RuleEngine.Action;
 
 public class SequenceTreeView : NodesWindow
 {
@@ -94,7 +95,7 @@ public class SequenceTreeView : NodesWindow
         var addConditionBtn = rootVisualElement.Q<ToolbarButton>("AddConditionButton");
         var discardBtn = rootVisualElement.Q<ToolbarButton>("DiscardButton");
         var saveBtn = rootVisualElement.Q<ToolbarButton>("SaveButton");
-        addActionBtn.clickable = new Clickable(() => { m_RuleEditorManager.AddAction(); });
+        addActionBtn.clickable = new Clickable(() => { m_RuleEditorManager.AddAction(new Action()); });
         addConditionBtn.clickable = new Clickable(() => { m_RuleEditorManager.AddCondition(); });
     }
 

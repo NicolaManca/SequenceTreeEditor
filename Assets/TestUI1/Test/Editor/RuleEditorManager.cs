@@ -19,44 +19,29 @@ public class RuleEditorManager
     public static VisualElement EventContainer { get; set; }
     public static VisualElement ConditionsContainer { get; set; }
     private static VisualElement conditionHeader;  
-    public static ListView ActionsLV { get; set; }
-
-    private static ActionDropdownsManager eventManager = new();
-    private static List<ConditionDropdownsManager> conditionManagers = new();
-    private static List<ActionDropdownsManager> actionManagers = new();
+    public static ScrollView ActionsSV { get; set; }
 
     private static readonly VisualTreeAsset m_ActionPrefabUxml = Resources.Load<VisualTreeAsset>("ActionPrefab");
     private static readonly VisualTreeAsset m_ConditionPrefabUxml = Resources.Load<VisualTreeAsset>("ConditionPrefab");
+    
+    
+    private ActionDropdownsManager eventManager = new();
+    private List<ConditionDropdownsManager> conditionManagers = new();
+    private List<ActionDropdownsManager> actionManagers = new();
 
     private List<Action> actions = new() { new Action() };
     private List<Condition> conditions = new();
     
-    
     public RuleEditorManager(Rule rule = null)
     {
-        if(rule != null) actions = rule.GetActions();
-        ActionsLV.itemsSource = actions;
+        if (rule != null) actions = rule.GetActions();
 
-        ActionsLV.makeItem = () =>
+        foreach (var action in actions)
         {
-            var prefab = m_ActionPrefabUxml.CloneTree();
-
-            var removeButton = prefab.Q<UnityEngine.UIElements.Button>("Button");
-            removeButton.clickable = new Clickable(evt => { RemoveAction(prefab); });
-
-            return prefab;
-        };
-
-        ActionsLV.bindItem = (VisualElement element, int index) =>
-        {
-            element.userData = index;
-            var actionManager = new ActionDropdownsManager();
-            //actionManagers.Add(actionManager);
-            actionManager.SetUpDropdownMenus(element, ActionsLV.childCount > 0);
-        };
-
-        ActionsLV.Rebuild();
+            AddAction(action);
+        }
     }
+
 
     public static void SetupManager(VisualElement ruleEditor)
     {
@@ -65,24 +50,30 @@ public class RuleEditorManager
         ConditionsContainer = ruleEditor.Q<VisualElement>("RuleParts").Q<VisualElement>("Conditions");
         conditionHeader = ruleEditor.Q<VisualElement>("Headers").Q<VisualElement>("Conditions");
 
-        ActionsLV = ruleEditor.Q<VisualElement>("RuleParts").Q<VisualElement>("Actions").Q<ListView>("ActionsLV");
+        ActionsSV = ruleEditor.Q<VisualElement>("RuleParts").Q<VisualElement>("Actions").Q<ScrollView>("ActionsSV");
     }
 
     public void SetUpEventDropdownMenus()
     {
         eventManager.SetUpDropdownMenus(EventContainer);
     }
-    public void SetUpActionDropdownMenus(VisualElement actionContainer)
-    {
-        var actionManager = new ActionDropdownsManager();
-        actionManagers.Add(actionManager);
-        actionManager.SetUpDropdownMenus(actionContainer);
-    }
 
-    public void AddAction()
+    public void AddAction(Action action)
     {
-        actions.Add(new Action());
-        ActionsLV.RefreshItems();
+        VisualElement actionPrefab = m_ActionPrefabUxml.CloneTree();
+
+        if (ActionsSV.childCount > 0)
+        {
+            actionPrefab.Q<VisualElement>("RemoveButton").style.display = DisplayStyle.Flex;
+            var removeButton = actionPrefab.Q<UnityEngine.UIElements.Button>("Button");
+            removeButton.clickable = new Clickable(evt => { RemoveAction(actionPrefab, action); });
+        }
+
+        var actionManager = new ActionDropdownsManager();
+        //actionManagers.Add(actionManager);
+        actionManager.SetUpDropdownMenus(actionPrefab, action);
+
+        ActionsSV.Add(actionPrefab);
     }
     public void AddCondition()
     {
@@ -107,13 +98,10 @@ public class RuleEditorManager
         conditionsSV.Add(conditionPrefab);
     }
 
-    public void RemoveAction(VisualElement actionElement)
+    public void RemoveAction(VisualElement actionElement, Action action)
     {
-        //var manager = actionManagers.ElementAt((int)actionElement.userData);
-        //actionManagers.Remove(manager);
-        var action = ActionsLV.itemsSource[(int)actionElement.userData] as Action;
         actions.Remove(action);
-        ActionsLV.Rebuild();
+        ActionsSV.Remove(actionElement);
     }
 
 }
@@ -227,7 +215,7 @@ public class ActionDropdownsManager
         SetUpSubject(subjectDrop);
     }
     //For Actions
-    public void SetUpDropdownMenus(VisualElement actionContainer, bool isPrefab)
+    public void SetUpDropdownMenus(VisualElement actionContainer, Action action)
     {
         var subjectPart = actionContainer.Q<VisualElement>("SubjectC");
         subjectDrop = subjectPart.Q<DropdownField>("Subject");
@@ -246,25 +234,14 @@ public class ActionDropdownsManager
         decimalField = objectPart.Q<VisualElement>("InputField").Q<FloatField>("DecimalInput");
         inputDrop = objectPart.Q<VisualElement>("InputField").Q<DropdownField>("Dropdown");
 
-        if (isPrefab)
-        {
-            actionContainer.Q<VisualElement>("RemoveButton").style.display = DisplayStyle.Flex;
-        }
 
-        Action action = (Action)RuleEditorManager.ActionsLV.itemsSource[(int)actionContainer.userData];
 
-        subjectDrop.RegisterValueChangedCallback(delegate { DropdownValueChangedSubject(subjectDrop, action); });
-        verbDrop.RegisterValueChangedCallback(delegate { DropdownValueChangedVerb(verbDrop, action); });
+        subjectDrop.RegisterValueChangedCallback(delegate { DropdownValueChangedSubject(subjectDrop); });
+        verbDrop.RegisterValueChangedCallback(delegate { DropdownValueChangedVerb(verbDrop); });
         //object with the value e.g. changes "active" ...
-        objectVerbDrop.RegisterValueChangedCallback(delegate { DropdownValueChangedObjectValue(objectVerbDrop, action); });
+        objectVerbDrop.RegisterValueChangedCallback(delegate { DropdownValueChangedObjectValue(objectVerbDrop); });
         //object without the value e.g. looks at gameobject
-        objectDrop.RegisterValueChangedCallback(delegate { DropdownValueChangedObject(objectDrop, action); });
-
-        prepDrop.RegisterValueChangedCallback(delegate { action.SetModifier(prepDrop.value); });
-        valueDrop.RegisterValueChangedCallback(delegate { action.SetModifierValue(valueDrop.value); });
-        textField.RegisterValueChangedCallback(delegate { action.SetMeasureUnit(textField.value); });
-        intField.RegisterValueChangedCallback(delegate { action.SetMeasureUnit($"{intField.value}"); });
-        decimalField.RegisterValueChangedCallback(delegate { action.SetMeasureUnit($"{decimalField.value}"); });
+        objectDrop.RegisterValueChangedCallback(delegate { DropdownValueChangedObject(objectDrop); });
 
 
         SetUpSubject(subjectDrop, action);
@@ -304,14 +281,12 @@ public class ActionDropdownsManager
         }
         entries.Sort();
         subjectDrop.choices = entries;
-        
-        
         if (isValid) subjectDrop.value = actionSubjectValue;
         else subjectDrop.value = "<no-value>";
 
     }
 
-    void DropdownValueChangedSubject(DropdownField subjectDropdown, Action action = null)
+    void DropdownValueChangedSubject(DropdownField subjectDropdown)
     {
         DisableNextComponent("subject");
         if (subjectDropdown.value == "<no-value>") return;
@@ -330,7 +305,6 @@ public class ActionDropdownsManager
         previousSelectedSubject = subjectSelected;
 
         subjectSelected = GameObject.Find(selectedCutString).gameObject;
-        if (action is not null) action.SetSubject(subjectSelected);
 
         //we have to find it from the dictionary, because some types are trimmed (see ECALight -> Light)
         foreach (var item in subjects)
@@ -365,12 +339,11 @@ public class ActionDropdownsManager
         verbDrop.SetValueWithoutNotify("<no-value>");
     }
 
-    void DropdownValueChangedVerb(DropdownField verbDrop, Action action = null)
+    void DropdownValueChangedVerb(DropdownField verbDrop)
     {
         //retrieve selected string and gameobject
         verbSelectedString = verbDrop.value;
         int verbSelectedIndex = verbDrop.index;
-        if (action is not null) action.SetActionMethod(verbSelectedString);
 
         DisableNextComponent("verb");
 
@@ -519,7 +492,7 @@ public class ActionDropdownsManager
         }
     }
 
-    void DropdownValueChangedObject(DropdownField objectDrop, Action action = null)
+    void DropdownValueChangedObject(DropdownField objectDrop)
     {
         DisableNextComponent("object");
         //retrieve selected string and gameobject
@@ -531,20 +504,17 @@ public class ActionDropdownsManager
         {
             previousSelectedObject = objectSelected;
             objectSelected = GameObject.Find(selectedCutString);
-            if (action is not null) action.SetObject(objectSelected);
         }
         else objectSelected = null;
     }
 
-    void DropdownValueChangedObjectValue(DropdownField objectVerbDrop, Action action = null)
+    void DropdownValueChangedObjectValue(DropdownField objectVerbDrop)
     {
         DisableNextComponent("object");
         //retrieve selected string and gameobject
         var objSelectedString = objectVerbDrop.value;
         //Debug.Log($"Called ChangedObjectValue: {objSelectedString}");
         objectSelected = null;
-
-        if (action is not null) action.SetActionMethod(action.GetActionMethod() + objSelectedString);
 
         prepDrop.style.display = DisplayStyle.Flex;
 
