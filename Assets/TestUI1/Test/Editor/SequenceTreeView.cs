@@ -88,7 +88,7 @@ public class SequenceTreeView : NodesWindow
 
 
         m_RuleEditorManager = new();
-        m_RuleEditorManager.SetUpEventDropdownMenus();
+        //m_RuleEditorManager.SetUpEventDropdownMenus();
 
         //Setup RuleEditor Toolbar Menu
         var addActionBtn = rootVisualElement.Q<ToolbarButton>("AddActionButton");

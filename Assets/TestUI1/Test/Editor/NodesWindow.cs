@@ -72,12 +72,12 @@ public class NodesWindow : EditorWindow
             set;
         }
 
-        public Leaf(int id, string name, int prefix = -1, Rule rule = null)
+        public Leaf(int id, string name, int prefix = -1)
         {
             this.Id = id;
             this.Name = name;
             this.Prefix = prefix;
-            this.Rule = new Rule(new Action(), new List<Action>());
+            this.Rule = null;
         }
     }
 
@@ -114,7 +114,7 @@ public class NodesWindow : EditorWindow
         }
     }
 
-    // Expresses planet data as a list of TreeViewItemData objects. Needed for TreeView and MultiColumnTreeView.
+    // Expresses data as a list of TreeViewItemData objects.
     protected static List<TreeViewItemData<INode>> TreeRoot
     {
         get
