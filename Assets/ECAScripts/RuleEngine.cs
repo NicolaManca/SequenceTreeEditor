@@ -681,6 +681,8 @@ namespace ECARules4All.RuleEngine
             checkSymbol = symbol;
             this.compareWith = compareWith;
         }
+        
+        public SimpleCondition() : this(null, null, null, null) { }
 
         ///<summary>
         ///<c>CompareValues</c> checks whether two objects satisfy given conditions. 
@@ -786,6 +788,15 @@ namespace ECARules4All.RuleEngine
         {
             return toCheck;
         }
+        
+        ///<summary>
+        ///<c>SetSubject</c> set the Gameobject to be checked
+        ///<para>subject: the GameObject subject of the condition</para>
+        ///</summary>
+        public void SetSubject(GameObject subject)
+        {
+            toCheck = subject;
+        }
 
         ///<summary>
         ///<c>GetProperty</c> returns the name of the property to be checked
@@ -795,6 +806,15 @@ namespace ECARules4All.RuleEngine
         public string GetProperty()
         {
             return property;
+        }
+
+        ///<summary>
+        ///<c>SetProperty</c> set the name of the property to be checked
+        ///<para>property: the name of the condition's property</para>
+        ///</summary>
+        public void SetProperty(string property)
+        {
+            this.property = property;
         }
 
         ///<summary>
@@ -808,6 +828,15 @@ namespace ECARules4All.RuleEngine
         }
 
         ///<summary>
+        ///<c>SetSymbol</c> set the symbol to be used in the comparison
+        ///<para>checkSymbol: the string of the condition's checkSymbol</para>
+        ///</summary>
+        public void SetSymbol(string checkSymbol)
+        {
+            this.checkSymbol = checkSymbol;
+        }
+
+        ///<summary>
         ///<c>GetProperty</c> returns the value to be checked against the value inside the GameObject in the same condition statement.
         ///<para/>
         ///<strong>Returns:</strong> The string containing the value to compare
@@ -815,6 +844,15 @@ namespace ECARules4All.RuleEngine
         public object GetValueToCompare()
         {
             return compareWith;
+        }
+
+        ///<summary>
+        ///<c>SetValueToCompare</c> set the value to be checked against the value inside the GameObject in the same condition statement.
+        ///<para>compareWith: the string containing the value to compare</para>
+        ///</summary>
+        public void SetValueToCompare(object compareWith)
+        {
+            this.compareWith = compareWith;
         }
 
         ///<summary>

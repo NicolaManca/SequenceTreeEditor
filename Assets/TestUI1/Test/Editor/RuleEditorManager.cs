@@ -11,8 +11,36 @@ using UnityEditor.IMGUI.Controls;
 using UnityEngine;
 using UnityEngine.UIElements;
 using UnityEngine.XR.Interaction.Toolkit.Examples.UIRule.Prefabs;
+using static ECARules4All.RuleEngine.CompositeCondition;
 using Action = ECARules4All.RuleEngine.Action;
 using FloatField = UnityEngine.UIElements.FloatField;
+
+
+public class CustomCondition
+{
+    public ConditionType op;
+    public SimpleCondition condition = new();
+
+
+    public static List<CustomCondition> ParseConditionToCustom(Condition condition)
+    {
+        //TODO: DFS with read on leaf first.
+        return new List<CustomCondition>();
+    }
+    public static ConditionType ParseStringToConditionType(string cType)
+    {
+        return cType switch
+        {
+            "And" => ConditionType.AND,
+            "Or" => ConditionType.OR,
+            "Not" => ConditionType.NOT,
+            _ => ConditionType.NONE,
+        };
+    }
+}
+
+
+
 
 public class RuleEditorManager
 {
@@ -31,7 +59,7 @@ public class RuleEditorManager
 
     private Action eventAction = new();
     private List<Action> actions = new() { new Action() };
-    private List<Condition> conditions = new();
+    private List<CustomCondition> conditions = new();
 
 
     public static void SetupManager(VisualElement ruleEditor)
@@ -53,7 +81,6 @@ public class RuleEditorManager
         //eventAction can either be the event in the Rule or a new blank Action.
         eventManager.SetUpDropdownMenus(EventContainer, eventAction);
 
-
         //Get the actions if there is already a Rule inside the Leaf node.
         if (rule != null) actions = rule.GetActions();
 
@@ -62,11 +89,23 @@ public class RuleEditorManager
         {
             AddAction(action);
         }
+
+        //Get the conditions if there is already a Rule inside the Leaf node.
+        if (rule != null) conditions = CustomCondition.ParseConditionToCustom(rule.GetCondition());
+
+        //Add the conditions (None if there is no Rule).
+        foreach (var condition in conditions)
+        {
+            AddCondition(condition);
+        }
     }
 
 
-    public void AddAction(Action action)
+    public void AddAction(Action action, bool isNew = false)
     {
+        //If the action is new, add it to the list.
+        if (isNew) actions.Add(action);
+
         VisualElement actionPrefab = m_ActionPrefabUxml.CloneTree();
 
         if (ActionsSV.childCount > 0)
@@ -82,27 +121,30 @@ public class RuleEditorManager
 
         ActionsSV.Add(actionPrefab);
     }
-    public void AddCondition()
+    public void AddCondition(CustomCondition condition, bool isNew = false)
     {
+        //If the condition is new, add it to the list.
+        if (isNew) conditions.Add(condition);
+
         var conditionsSV = ConditionsContainer.Q<ScrollView>("ConditionsSV");
         VisualElement conditionPrefab = m_ConditionPrefabUxml.CloneTree();
 
-        var conditionManager = new ConditionDropdownsManager();
-        //conditionManagers.Add(conditionManager);
+        var removeButton = conditionPrefab.Q<UnityEngine.UIElements.Button>("Button");
+        removeButton.clickable = new Clickable(evt => { RemoveCondition(conditionPrefab, condition); });
 
-        if (conditionsSV.childCount == 0)
-        {
-            conditionHeader.style.display = DisplayStyle.Flex;
-            ConditionsContainer.style.display = DisplayStyle.Flex;
-        }
-        else
+        if (conditionsSV.childCount > 0)
         {
             conditionPrefab.Q<VisualElement>("ToCheckC").Q<DropdownField>("AndOr").style.display = DisplayStyle.Flex;
         }
 
-        conditionManager.SetUpDropdownMenus(conditionPrefab);
+        var conditionManager = new ConditionDropdownsManager();
+        //conditionManagers.Add(conditionManager);
+        conditionManager.SetUpDropdownMenus(conditionPrefab, condition);
             
         conditionsSV.Add(conditionPrefab);
+
+        //The section is visible iff there is at least one condition.
+        SetConditionsSectionVisibility(DisplayStyle.Flex);
     }
 
 
@@ -111,7 +153,31 @@ public class RuleEditorManager
         actions.Remove(action);
         ActionsSV.Remove(actionElement);
     }
+    public void RemoveCondition(VisualElement conditionElement, CustomCondition condition)
+    {
+        var conditionsSV = ConditionsContainer.Q<ScrollView>("ConditionsSV");
+        conditions.Remove(condition);
+        conditionsSV.Remove(conditionElement);
 
+        if(conditionsSV.childCount > 0)
+        {
+            var andOrDrop = conditionsSV.contentContainer.Q<VisualElement>("Condition").Q<VisualElement>("ToCheckC").Q<DropdownField>("AndOr");
+            andOrDrop.value = "";
+            andOrDrop.style.display = DisplayStyle.None;
+        }
+        
+        //Manage section visibility
+        //If there are no more conditions, the section is not longer visible.
+        if(conditionsSV.childCount == 0)
+            SetConditionsSectionVisibility(DisplayStyle.None);
+    }
+
+
+    private void SetConditionsSectionVisibility(DisplayStyle displayStyle)
+    {
+        conditionHeader.style.display = displayStyle;
+        ConditionsContainer.style.display = displayStyle;
+    }
 }
 
 
@@ -222,10 +288,11 @@ public class ActionDropdownsManager
         objectDrop.RegisterValueChangedCallback(delegate { DropdownValueChangedObject(objectDrop, action); });
 
         prepDrop.RegisterValueChangedCallback(delegate { action.SetModifier(prepDrop.value); });
-        valueDrop.RegisterValueChangedCallback(delegate { action.SetModifierValue(valueDrop.value); });
-        textField.RegisterValueChangedCallback(delegate { action.SetMeasureUnit(textField.value); });
-        intField.RegisterValueChangedCallback(delegate { action.SetMeasureUnit($"{intField.value}"); });
-        decimalField.RegisterValueChangedCallback(delegate { action.SetMeasureUnit($"{decimalField.value}"); });
+        valueDrop.RegisterValueChangedCallback(delegate { action.SetModifierValue(GetGameObjectFromName(valueDrop.value)); });
+        textField.RegisterValueChangedCallback(delegate { action.SetModifierValue(textField.value); });
+        intField.RegisterValueChangedCallback(delegate { action.SetModifierValue(intField.value); });
+        decimalField.RegisterValueChangedCallback(delegate { action.SetModifierValue(decimalField.value); });
+        inputDrop.RegisterValueChangedCallback(delegate { action.SetModifierValue(inputDrop.value); });
 
         SetUpSubject(subjectDrop, action);
     }
@@ -236,10 +303,8 @@ public class ActionDropdownsManager
         subjects = RuleUtils.FindSubjects();
         List<string> entries = new List<string>();
 
-        bool isValid = false;
         string actionSubjectValue = "<no-value>";
-        GameObject actionSubject = null;
-        actionSubject = action.GetSubject();
+        GameObject actionSubject = action.GetSubject();
 
         subjectDrop.choices.Clear();
 
@@ -252,17 +317,13 @@ public class ActionDropdownsManager
                 string type = RuleUtils.FindInnerTypeNotBehaviour(entry.Key);
                 type = RuleUtils.RemoveECAFromString(type);
                 entries.Add(type + " " + entry.Key.name);
-                if (actionSubject == entry.Key)
-                {
+                if (actionSubject == entry.Key) 
                     actionSubjectValue = type + " " + entry.Key.name;
-                    isValid = true;
-                }
             }
         }
         entries.Sort();
         subjectDrop.choices = entries;
-        if (isValid) subjectDrop.value = actionSubjectValue;
-        else subjectDrop.value = "<no-value>";
+        subjectDrop.value = actionSubjectValue;
 
     }
     void DropdownValueChangedSubject(DropdownField subjectDropdown, Action action)
@@ -278,13 +339,13 @@ public class ActionDropdownsManager
 
         //retrieve selected string and gameobject
         string selectedSubjectString = subjectDropdown.value;
-        action.SetSubject(subjectSelected);
 
         //I need to cut the string because in the dropdown we use "Type Name", the dictionary only contains the type
         string selectedCutString = Regex.Match(selectedSubjectString, "[^ ]* (.*)").Groups[1].Value;
         previousSelectedSubject = subjectSelected;
 
         subjectSelected = GameObject.Find(selectedCutString).gameObject;
+        action.SetSubject(subjectSelected);
 
         //we have to find it from the dictionary, because some types are trimmed (see ECALight -> Light)
         foreach (var item in subjects)
@@ -649,6 +710,22 @@ public class ActionDropdownsManager
                 break;
         }
     }
+    GameObject GetGameObjectFromName(string name)
+    {
+        for (int i = 0; i < subjects.Count; i++)
+        {
+            foreach (KeyValuePair<GameObject, string> entry in subjects[i])
+            {
+                string type = RuleUtils.FindInnerTypeNotBehaviour(entry.Key);
+                type = RuleUtils.RemoveECAFromString(type);
+                if (name == entry.Key.name)
+                {
+                    return entry.Key;
+                }
+            }
+        }
+        return null;
+    }
 }
 
 
@@ -688,14 +765,14 @@ public class ConditionDropdownsManager
     private ECARules4AllType compareWithType;
     #endregion
 
-
-    public void SetUpDropdownMenus(VisualElement conditionContainer)
+    //The values are saved in the condition, but not permanently (user needs to press Save for that).
+    public void SetUpDropdownMenus(VisualElement conditionContainer, CustomCondition cCondition)
     {
-
         var toCheckPart = conditionContainer.Q<VisualElement>("ToCheckC");
         toCheckDrop = toCheckPart.Q<DropdownField>("ToCheck");
         andOrDrop = toCheckPart.Q<DropdownField>("AndOr");
-        andOrDrop.choices = new List<string>() { "And", "Or" };
+        andOrDrop.choices = new List<string>() { "And", "Or", "Not" };
+        andOrDrop.SetValueWithoutNotify("And");
 
         var propertyPart = conditionContainer.Q<VisualElement>("PropertyC");
         propertyDrop = propertyPart.Q<DropdownField>("Property");
@@ -708,20 +785,31 @@ public class ConditionDropdownsManager
         decimalField = compareWithPart.Q<FloatField>("DecimalInput");
 
 
+        //Listener
+        andOrDrop.RegisterValueChangedCallback(delegate { cCondition.op = CustomCondition.ParseStringToConditionType(andOrDrop.value); });
+        toCheckDrop.RegisterValueChangedCallback(delegate { DropdownValueChangedToCheck(toCheckDrop, cCondition); });
+        
+        propertyDrop.RegisterValueChangedCallback(delegate { DropdownValueChangedProperty(propertyDrop, cCondition); });
+        checkSymbolDrop.RegisterValueChangedCallback(delegate { DropdownValueChangedCheckSymbol(checkSymbolDrop, cCondition); });
+
+        compareWithDrop.RegisterValueChangedCallback(delegate { cCondition.condition.SetValueToCompare(GetGameObjectFromName(compareWithDrop.value)); });
+        textField.RegisterValueChangedCallback(delegate { cCondition.condition.SetValueToCompare(textField.value); });
+        intField.RegisterValueChangedCallback(delegate { cCondition.condition.SetValueToCompare(intField.value); });
+        decimalField.RegisterValueChangedCallback(delegate { cCondition.condition.SetValueToCompare(decimalField.value); });
+
 
         //at start we must populate the first dropdown
-        PopulateToCheckDropdown();
-
-        //Listener
-        toCheckDrop.RegisterValueChangedCallback(delegate { DropdownValueChangedToCheck(toCheckDrop); });
-        propertyDrop.RegisterValueChangedCallback(delegate { DropdownValueChangedProperty(propertyDrop); });
-        checkSymbolDrop.RegisterValueChangedCallback(delegate { DropdownValueChangedCheckSymbol(checkSymbolDrop); });
+        PopulateToCheckDropdown(cCondition);
     }
 
-    private void PopulateToCheckDropdown()
+
+    private void PopulateToCheckDropdown(CustomCondition cCondition)
     {
         toCheckDrop.choices.Clear();
         toCheckDictionary = RuleUtils.FindSubjects();
+
+        string conditionSubjectValue = "<no-value>";
+        GameObject conditionSubject = cCondition.condition.GetSubject();
 
         // Used to sort each dropdown's options
         List<string> entries = new List<string>();
@@ -734,30 +822,34 @@ public class ConditionDropdownsManager
                 string type = RuleUtils.FindInnerTypeNotBehaviour(entry.Key);
                 type = RuleUtils.RemoveECAFromString(type);
                 entries.Add(type + " " + entry.Key.name);
+                if (conditionSubject == entry.Key)
+                    conditionSubjectValue = type + " " + entry.Key.name;
             }
         }
         entries.Sort();
         toCheckDrop.choices = entries;
-        toCheckDrop.SetValueWithoutNotify("<no-value>");
+        toCheckDrop.value = conditionSubjectValue;
     }
-
-    private void DropdownValueChangedToCheck(DropdownField toCheck)
+    private void DropdownValueChangedToCheck(DropdownField toCheck, CustomCondition cCondition)
     {
         //if previous activated, hide next elements
         DisableNextComponent("toCheck");
+
+        //retrieve selected string and gameobject
+        string selectedSubjectString = toCheck.value;
+        if (selectedSubjectString == "<no-value>") return;
 
         //activate next element
         propertyDrop.style.display = DisplayStyle.Flex;
         propertyDrop.choices.Clear();
 
-        //retrieve selected string and gameobject
-        string selectedSubjectString = toCheck.value;
 
         //I need to cut the string because in the dropdown we use "Type Name", the dictionary only contains the type
         string selectedCutString = Regex.Match(selectedSubjectString, "[^ ]* (.*)").Groups[1].Value;
         toCheckSelectedType = Regex.Match(selectedSubjectString, "^[^ ]+").Value;
         previousToCheckSelected = toCheckSelected;
         toCheckSelected = GameObject.Find(selectedCutString).gameObject;
+        cCondition.condition.SetSubject(toCheckSelected);
 
         stateVariables = RuleUtils.FindStateVariables(toCheckSelected);
 
@@ -778,19 +870,21 @@ public class ConditionDropdownsManager
         propertyDrop.choices = entries;
         propertyDrop.SetValueWithoutNotify("<no-value>");
     }
-
-    private void DropdownValueChangedProperty(DropdownField property)
+    private void DropdownValueChangedProperty(DropdownField property, CustomCondition cCondition)
     {
         //if previous activated, hide next elements
         DisableNextComponent("property");
+
+        //retrieve selected string and type
+        propertySelected = property.value;
+        if (propertySelected == "<no-value>") return;
 
         //activate next element
         checkSymbolDrop.style.display = DisplayStyle.Flex;
         checkSymbolDrop.choices.Clear();
 
-        //retrieve selected string and type
-        propertySelected = property.value;
         if (propertySelected.StartsWith("rotation ")) propertySelected = "rotation";
+        cCondition.condition.SetProperty(propertySelected);
 
         //thanks to the dictionary, we can retrieve the type:
         ECARules4AllType type = stateVariables[propertySelected].Item1;
@@ -827,11 +921,12 @@ public class ConditionDropdownsManager
         checkSymbolDrop.choices = entries;
         checkSymbolDrop.SetValueWithoutNotify("<no-value>");
     }
-
-    private void DropdownValueChangedCheckSymbol(DropdownField checkSymbol)
+    private void DropdownValueChangedCheckSymbol(DropdownField checkSymbol, CustomCondition cCondition)
     {
         //retrieve selected string 
         selectedSymbol = checkSymbol.value;
+        if (selectedSymbol == "<no-value>") return;
+        cCondition.condition.SetSymbol(selectedSymbol);
 
         ECARules4AllType type = stateVariables[propertySelected].Item1;
         compareWithType = type;
@@ -967,5 +1062,21 @@ public class ConditionDropdownsManager
                 break;
         }
         compareWithDrop.style.display = DisplayStyle.None;
+    }
+    GameObject GetGameObjectFromName(string name)
+    {
+        for (int i = 0; i < toCheckDictionary.Count; i++)
+        {
+            foreach (KeyValuePair<GameObject, string> entry in toCheckDictionary[i])
+            {
+                string type = RuleUtils.FindInnerTypeNotBehaviour(entry.Key);
+                type = RuleUtils.RemoveECAFromString(type);
+                if (name == entry.Key.name)
+                {
+                    return entry.Key;
+                }
+            }
+        }
+        return null;
     }
 }

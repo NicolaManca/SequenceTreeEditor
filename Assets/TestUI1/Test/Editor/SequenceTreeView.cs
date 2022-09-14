@@ -96,7 +96,7 @@ public class SequenceTreeView : NodesWindow
         var discardBtn = rootVisualElement.Q<ToolbarButton>("DiscardButton");
         var saveBtn = rootVisualElement.Q<ToolbarButton>("SaveButton");
         addActionBtn.clickable = new Clickable(() => { m_RuleEditorManager.AddAction(new Action()); });
-        addConditionBtn.clickable = new Clickable(() => { m_RuleEditorManager.AddCondition(); });
+        addConditionBtn.clickable = new Clickable(() => { m_RuleEditorManager.AddCondition(new CustomCondition()); });
     }
 
 
