@@ -172,11 +172,29 @@ public class RuleEditorManager
             SetConditionsSectionVisibility(DisplayStyle.None);
     }
 
-
     private void SetConditionsSectionVisibility(DisplayStyle displayStyle)
     {
         conditionHeader.style.display = displayStyle;
         ConditionsContainer.style.display = displayStyle;
+    }
+
+
+    public void DiscardRule()
+    {
+        //Discard Event
+        eventAction = new Action();
+        eventManager.SetUpDropdownMenus(EventContainer, eventAction);
+
+        //Discard Actions
+        actions = new List<Action>() { new Action() };
+        ActionsSV.Clear();
+        AddAction(actions[0]);
+
+        //Discard Condtions
+        conditions = new List<CustomCondition>();
+        var conditionSV = ConditionsContainer.Q<ScrollView>("ConditionsSV");
+        conditionSV.Clear();
+        SetConditionsSectionVisibility(DisplayStyle.None);
     }
 }
 
