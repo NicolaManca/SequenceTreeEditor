@@ -20,6 +20,7 @@ public class SequenceTreeView : NodesWindow
     private int m_Id;
     private TreeView m_TreeView;
     private VisualElement m_RuleEditorContainer;
+    private int m_PrevSelectedNode = -1;
 
     [MenuItem("Sequence/Sequence Tree")]
     static void Summon()
@@ -142,6 +143,8 @@ public class SequenceTreeView : NodesWindow
 
     private void UpdateRuleEditorStatus(IEnumerable<object> obj)
     {
+        if (m_TreeView.selectedIndex == m_PrevSelectedNode) return;
+        m_PrevSelectedNode = m_TreeView.selectedIndex;
         var selection = obj.First() as INode;
         if (selection.GetType() != typeof(Leaf))
         {

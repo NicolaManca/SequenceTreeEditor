@@ -148,6 +148,9 @@ public class RuleEditorManager
 
     public RuleEditorManager(Rule rule = null)
     {
+        ConditionsContainer.Q<ScrollView>("ConditionsSV").Clear();
+        ActionsSV.Clear();
+
         //Get the event if there is already a Rule inside the Leaf node.
         if (rule != null) eventAction = rule.GetEvent();
         //Setup the event.
