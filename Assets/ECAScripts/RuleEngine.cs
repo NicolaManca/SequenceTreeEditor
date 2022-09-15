@@ -474,7 +474,7 @@ namespace ECARules4All.RuleEngine
 
         public override string ToString()
         {
-            string ruleString = $"When {Event}, Then";
+            string ruleString = $"When the {Event}, Then the";
 
             actions.ForEach(action => ruleString += $" {action};");
 
@@ -1145,9 +1145,9 @@ namespace ECARules4All.RuleEngine
         public override string ToString()
         {
             var actionString = $"{a_subject.name} {a_verb}";
-            actionString += a_object ?? "";
-            actionString += a_modifier ?? "";
-            actionString += a_value ?? "";
+            actionString += a_object == null ? "" : $" {a_object}";
+            actionString += a_modifier == null ? "" : $" {a_modifier}";
+            actionString += a_value == null ? "": $" {a_value}";
             return actionString;
         }
 

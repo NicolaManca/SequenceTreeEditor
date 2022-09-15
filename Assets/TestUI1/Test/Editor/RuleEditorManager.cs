@@ -393,6 +393,13 @@ public class ActionDropdownsManager
         decimalField.RegisterValueChangedCallback(delegate { action.SetModifierValue(decimalField.value); });
         inputDrop.RegisterValueChangedCallback(delegate { action.SetModifierValue(inputDrop.value); });
 
+        //prepDrop.RegisterValueChangedCallback(delegate { DropdownValueChangedPrep(prepDrop, action); });
+        //valueDrop.RegisterValueChangedCallback(delegate { DropdownValueChangedInput(valueDrop.value, action); });
+        //textField.RegisterValueChangedCallback(delegate { DropdownValueChangedInput(textField.value, action); });
+        //intField.RegisterValueChangedCallback(delegate { DropdownValueChangedInput(intField.value, action); });
+        //decimalField.RegisterValueChangedCallback(delegate { DropdownValueChangedInput(decimalField.value, action); });
+        //inputDrop.RegisterValueChangedCallback(delegate { DropdownValueChangedInput(inputDrop.value, action); });
+
         SetUpSubject(subjectDrop, action);
     }
 
@@ -427,8 +434,12 @@ public class ActionDropdownsManager
     }
     void DropdownValueChangedSubject(DropdownField subjectDropdown, Action action)
     {
-        DisableNextComponent("subject");
-        if (subjectDropdown.value == "<no-value>") return;
+        DisableNextComponent("subject", action);
+        if (subjectDropdown.value == "<no-value>")
+        {
+            action.SetSubject(null);
+            return;
+        }
 
         verbDrop.style.display = DisplayStyle.Flex;
         verbDrop.choices.Clear();
@@ -475,7 +486,6 @@ public class ActionDropdownsManager
         }
         entries.Sort();
         verbDrop.choices = entries;
-
         verbDrop.value = "<no-value>";
     }
     void DropdownValueChangedVerb(DropdownField verbDrop, Action action)
@@ -484,9 +494,14 @@ public class ActionDropdownsManager
         verbSelectedString = verbDrop.value;
         int verbSelectedIndex = verbDrop.index;
 
-        DisableNextComponent("verb");
+        DisableNextComponent("verb", action);
 
-        if (verbSelectedString == "<no-value>") return;
+
+        if (verbSelectedString == "<no-value>")
+        {
+            action.SetActionMethod(null);
+            return;
+        }
         action.SetActionMethod(verbSelectedString);
 
         //now, I need to know if the object would be a GameObject or a value 
@@ -634,9 +649,14 @@ public class ActionDropdownsManager
     }
     void DropdownValueChangedObject(DropdownField objectDrop, Action action)
     {
-        DisableNextComponent("object");
+        DisableNextComponent("object", action);
         //retrieve selected string and gameobject
         var objSelectedString = objectDrop.value;
+        if (objSelectedString == "<no-value>")
+        {
+            action.SetObject(null);
+            return;
+        }
 
         string selectedCutString = Regex.Match(objSelectedString, "[^ ]* (.*)").Groups[1].Value;
         //The object selected is a GameObject
@@ -650,10 +670,10 @@ public class ActionDropdownsManager
     }
     void DropdownValueChangedObjectValue(DropdownField objectVerbDrop, Action action)
     {
-        DisableNextComponent("object");
+        DisableNextComponent("object", action);
         //retrieve selected string and gameobject
         var objSelectedString = objectVerbDrop.value;
-        //Debug.Log($"Called ChangedObjectValue: {objSelectedString}");
+        if (objSelectedString == "<no-value>") return;
         objectSelected = null;
 
         action.SetActionMethod($"{action.GetActionMethod()} {objSelectedString}");
@@ -748,7 +768,15 @@ public class ActionDropdownsManager
         }
 
     }
-
+    void DropdownValueChangedPrep(DropdownField prepDrop, Action action)
+    {
+        action.SetModifier(prepDrop.value);
+    }
+    void DropdownValueChangedInput(object inputDrop, Action action)
+    {
+        if ((inputDrop as string) == "<no-value>") action.SetModifierValue(null);
+        action.SetModifierValue(inputDrop);
+    }
 
     void ActivateInputField(string validationType)
     {
@@ -771,7 +799,7 @@ public class ActionDropdownsManager
                 break;
         }
     }
-    void DisableNextComponent(string changedField)
+    void DisableNextComponent(string changedField, Action action)
     {
         switch (changedField)
         {
@@ -779,6 +807,7 @@ public class ActionDropdownsManager
             case "subject":
                 verbDrop.style.display = DisplayStyle.None;
                 objectVerbDrop.style.display = DisplayStyle.None;
+                action.SetActionMethod(null);
 
                 prefixThe.style.display = DisplayStyle.None;
                 prepDrop.style.display = DisplayStyle.None;
@@ -788,6 +817,9 @@ public class ActionDropdownsManager
                 intField.style.display = DisplayStyle.None;
                 decimalField.style.display = DisplayStyle.None;
                 inputDrop.style.display = DisplayStyle.None;
+                action.SetObject(null);
+                action.SetModifier(null);
+                action.SetModifierValue(null);
                 break;
             // Change verb
             case "verb":
@@ -801,11 +833,16 @@ public class ActionDropdownsManager
                 intField.style.display = DisplayStyle.None;
                 decimalField.style.display = DisplayStyle.None;
                 inputDrop.style.display = DisplayStyle.None;
+                action.SetObject(null);
+                action.SetModifier(null);
+                action.SetModifierValue(null);
                 break;
             // Change object
             case "object":
                 valueDrop.style.display = DisplayStyle.None;
                 valueDrop.choices.Clear();
+                action.SetModifier(null);
+                action.SetModifierValue(null);
                 break;
         }
     }
