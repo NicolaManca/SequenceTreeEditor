@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
+using TMPro.EditorUtilities;
 using Unity.VisualScripting;
 using UnityEditor;
 using UnityEditor.IMGUI.Controls;
@@ -24,9 +25,76 @@ public class CustomCondition
 
     public static List<CustomCondition> ParseConditionToCustom(Condition condition)
     {
-        //TODO: DFS with read on leaf first.
-        return new List<CustomCondition>();
+        List<CustomCondition> conditionsList = new();
+
+        conditionsList = DFS(condition, conditionsList);
+
+
+        return conditionsList;
     }
+
+    public static Condition ParseCustomToCondition(List<CustomCondition> customList)
+    {
+        Condition condition = customList.First().condition;
+
+        customList.RemoveAt(0);
+        foreach (var customC in customList)
+        {
+            //If there is only one node in the condition tree.
+            if (condition.IsLeaf())
+            {
+                if(customC.op == ConditionType.NOT)
+                {
+                    CompositeCondition notCondition = new(ConditionType.NOT, new List<Condition>() { customC.condition });
+                    condition = new CompositeCondition(ConditionType.OR, new List<Condition>() { condition, notCondition });
+                }
+                else
+                    condition = new CompositeCondition(customC.op, new List<Condition>() { condition, customC.condition });
+            }
+            //If the new condition has the same op as the current tree root, add it as a child.
+            else if((condition as CompositeCondition).Op == customC.op)
+            {
+                (condition as CompositeCondition).AddChild(customC.condition);
+            }
+            //If the new condition has op NOT, we first need to create a CompositeCondition with op NOT and the condition as only child.
+            else if(customC.op == ConditionType.NOT)
+            {
+                CompositeCondition notCondition = new(ConditionType.NOT, new List<Condition>() { customC.condition });
+                //The Not condition is added to tree under an Or type condition. If there is already one as root, add the Not conditon as its child.
+                if ((condition as CompositeCondition).Op == ConditionType.OR)
+                {
+                    (condition as CompositeCondition).AddChild(notCondition);
+                }
+                //Otherwise create an Or condition set it as new root of the condition tree.
+                else
+                    condition = new CompositeCondition(ConditionType.OR, new List<Condition>() { condition, notCondition });
+            }
+            //If the new node cannot be directly added as child of the current root, create a new one.
+            else
+                condition = new CompositeCondition(customC.op, new List<Condition>() { condition, customC.condition });
+        }
+
+        return condition;
+    }
+
+    private static List<CustomCondition> DFS(Condition condition, List<CustomCondition> conditionsList)
+    {
+        if (condition.IsLeaf()) 
+        {
+            CustomCondition customCondition = new();
+            customCondition.condition = condition as SimpleCondition;
+            customCondition.op = (condition.GetParent() as CompositeCondition).Op;
+            conditionsList.Add(customCondition);
+            return conditionsList;
+        }
+        foreach (var child in (condition as CompositeCondition).Children())
+        {
+            conditionsList = DFS(child, conditionsList);
+        }
+        return conditionsList;
+
+    }
+
     public static ConditionType ParseStringToConditionType(string cType)
     {
         return cType switch
@@ -36,6 +104,11 @@ public class CustomCondition
             "Not" => ConditionType.NOT,
             _ => ConditionType.NONE,
         };
+    }
+
+    public override string ToString()
+    {
+        return $"{op} {condition}";
     }
 }
 
@@ -196,6 +269,14 @@ public class RuleEditorManager
         conditionSV.Clear();
         SetConditionsSectionVisibility(DisplayStyle.None);
     }
+
+    public Rule GetRule()
+    {
+        if(conditions.Count == 0)
+            return new Rule(eventAction, actions);
+        var condition = CustomCondition.ParseCustomToCondition(conditions);
+        return new Rule(eventAction, condition, actions);
+    }
 }
 
 
@@ -306,7 +387,7 @@ public class ActionDropdownsManager
         objectDrop.RegisterValueChangedCallback(delegate { DropdownValueChangedObject(objectDrop, action); });
 
         prepDrop.RegisterValueChangedCallback(delegate { action.SetModifier(prepDrop.value); });
-        valueDrop.RegisterValueChangedCallback(delegate { action.SetModifierValue(GetGameObjectFromName(valueDrop.value)); });
+        valueDrop.RegisterValueChangedCallback(delegate { action.SetModifierValue(valueDrop.value); });
         textField.RegisterValueChangedCallback(delegate { action.SetModifierValue(textField.value); });
         intField.RegisterValueChangedCallback(delegate { action.SetModifierValue(intField.value); });
         decimalField.RegisterValueChangedCallback(delegate { action.SetModifierValue(decimalField.value); });
@@ -395,7 +476,7 @@ public class ActionDropdownsManager
         entries.Sort();
         verbDrop.choices = entries;
 
-        verbDrop.SetValueWithoutNotify("<no-value>");
+        verbDrop.value = "<no-value>";
     }
     void DropdownValueChangedVerb(DropdownField verbDrop, Action action)
     {
@@ -484,7 +565,7 @@ public class ActionDropdownsManager
                         objectVerbDrop.choices.Add("x");
                         objectVerbDrop.choices.Add("y");
                         objectVerbDrop.choices.Add("z");
-                        objectVerbDrop.SetValueWithoutNotify("<no-value>");
+                        objectVerbDrop.value = "<no-value>";
                         break;
                     case "Int32":
                         ActivateInputField("integer");
@@ -515,7 +596,7 @@ public class ActionDropdownsManager
 
                 entries.Sort();
                 objectDrop.choices = entries;
-                objectDrop.SetValueWithoutNotify("<no-value>");
+                objectDrop.value = "<no-value>";
             }
             //value e.g. increases intensity
             else if (ac.ValueType != null)
@@ -548,7 +629,7 @@ public class ActionDropdownsManager
             }
             entries.Sort();
             objectVerbDrop.choices = entries;
-            objectVerbDrop.SetValueWithoutNotify("<no-value>");
+            objectVerbDrop.value = "<no-value>";
         }
     }
     void DropdownValueChangedObject(DropdownField objectDrop, Action action)
@@ -575,7 +656,7 @@ public class ActionDropdownsManager
         //Debug.Log($"Called ChangedObjectValue: {objSelectedString}");
         objectSelected = null;
 
-        action.SetActionMethod(action.GetActionMethod() + objSelectedString);
+        action.SetActionMethod($"{action.GetActionMethod()} {objSelectedString}");
 
         prepDrop.style.display = DisplayStyle.Flex;
 
@@ -601,7 +682,7 @@ public class ActionDropdownsManager
             if (ac.variableName == objSelectedString)
             {
                 prepDrop.choices.Add(ac.ModifierString);
-                prepDrop.SetValueWithoutNotify(ac.ModifierString);
+                prepDrop.value = ac.ModifierString;
                 objSelectedType = ac.ValueType.Name;
 
                 switch (ac.ValueType.Name)
@@ -661,7 +742,7 @@ public class ActionDropdownsManager
                 }
                 entries.Sort();
                 valueDrop.choices = entries;
-                valueDrop.SetValueWithoutNotify("<no-value>");
+                valueDrop.value = "<no-value>";
                 return;
             }
         }

@@ -471,6 +471,15 @@ namespace ECARules4All.RuleEngine
         {
             return actions;
         }
+
+        public override string ToString()
+        {
+            string ruleString = $"When {Event}, Then";
+
+            actions.ForEach(action => ruleString += $" {action};");
+
+            return ruleString;
+        }
     }
 
     /// <summary>
@@ -1135,7 +1144,11 @@ namespace ECARules4All.RuleEngine
 
         public override string ToString()
         {
-            return a_subject + " " + a_verb + " " + a_object + " " + a_modifier + " " + a_value;
+            var actionString = $"{a_subject.name} {a_verb}";
+            actionString += a_object ?? "";
+            actionString += a_modifier ?? "";
+            actionString += a_value ?? "";
+            return actionString;
         }
 
         //Override vari per controllare l'uguaglianza tra Azioni

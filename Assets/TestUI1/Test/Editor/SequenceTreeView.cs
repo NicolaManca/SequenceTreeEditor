@@ -21,8 +21,6 @@ public class SequenceTreeView : NodesWindow
     private TreeView m_TreeView;
     private VisualElement m_RuleEditorContainer;
 
-    private RuleEditorManager m_RuleEditorManager;
-
     [MenuItem("Sequence/Sequence Tree")]
     static void Summon()
     {
@@ -86,35 +84,7 @@ public class SequenceTreeView : NodesWindow
         
 
 
-
-        m_RuleEditorManager = new();
-        //m_RuleEditorManager.SetUpEventDropdownMenus();
-
-        //Setup RuleEditor Toolbar Menu
-        var addActionBtn = rootVisualElement.Q<ToolbarButton>("AddActionButton");
-        var addConditionBtn = rootVisualElement.Q<ToolbarButton>("AddConditionButton");
-        var discardBtn = rootVisualElement.Q<ToolbarButton>("DiscardButton");
-        var saveBtn = rootVisualElement.Q<ToolbarButton>("SaveButton");
-        addActionBtn.clickable = new Clickable(() => { m_RuleEditorManager.AddAction(new Action(), true); });
-        addConditionBtn.clickable = new Clickable(() => { m_RuleEditorManager.AddCondition(new CustomCondition(), true); });
-        discardBtn.clickable = new Clickable(() => { m_RuleEditorManager.DiscardRule(); });
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -181,6 +151,26 @@ public class SequenceTreeView : NodesWindow
 
         m_RuleEditorContainer.SetEnabled(true);
 
+        var ruleEditorManager = new RuleEditorManager();
+
+        //Setup RuleEditor Toolbar Menu
+        var addActionBtn = rootVisualElement.Q<ToolbarButton>("AddActionButton");
+        var addConditionBtn = rootVisualElement.Q<ToolbarButton>("AddConditionButton");
+        var discardBtn = rootVisualElement.Q<ToolbarButton>("DiscardButton");
+        var saveBtn = rootVisualElement.Q<ToolbarButton>("SaveButton");
+        addActionBtn.clickable = new Clickable(() => { ruleEditorManager.AddAction(new Action(), true); });
+        addConditionBtn.clickable = new Clickable(() => { ruleEditorManager.AddCondition(new CustomCondition(), true); });
+        discardBtn.clickable = new Clickable(() => { ruleEditorManager.DiscardRule(); });
+        saveBtn.clickable = new Clickable(() => { SaveRuleIntoNode(selection as Leaf, ruleEditorManager); });
+
+    }
+
+    private void SaveRuleIntoNode(Leaf node, RuleEditorManager ruleEditorManager)
+    {
+        var rule = ruleEditorManager.GetRule();
+        node.Rule = rule;
+        node.Name = rule.ToString();
+        m_TreeView.RefreshItems();
     }
 
     public void OnButtonClicked()
