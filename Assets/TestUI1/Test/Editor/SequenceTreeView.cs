@@ -80,8 +80,7 @@ public class SequenceTreeView : NodesWindow
 
         m_RuleEditorContainer = rootVisualElement.Q<VisualElement>("RuleEditorContainer");
         m_RuleEditorContainer.SetEnabled(false);
-        var ruleEditor = m_RuleEditorContainer.Q<VisualElement>("RuleEditor");
-        RuleEditorManager.SetupManager(ruleEditor);
+        RuleEditorManager.SetupManager(m_RuleEditorContainer);
         
 
 
@@ -153,8 +152,8 @@ public class SequenceTreeView : NodesWindow
         }
 
         m_RuleEditorContainer.SetEnabled(true);
-
-        var ruleEditorManager = new RuleEditorManager();
+        var rule = (selection as Leaf).Rule;
+        var ruleEditorManager = new RuleEditorManager(rule);
 
         //Setup RuleEditor Toolbar Menu
         var addActionBtn = rootVisualElement.Q<ToolbarButton>("AddActionButton");
@@ -170,24 +169,18 @@ public class SequenceTreeView : NodesWindow
 
     private void SaveRuleIntoNode(Leaf node, RuleEditorManager ruleEditorManager)
     {
+        Debug.Log("Saving Rule...");
         var rule = ruleEditorManager.GetRule();
+        if(rule == null)
+        {
+            RuleEditorManager.SetErrorMessageVisibility(DisplayStyle.Flex);
+            return;
+        }
         node.Rule = rule;
         node.Name = rule.ToString();
         m_TreeView.RefreshItems();
     }
 
-    public void OnButtonClicked()
-    {
-        var selectionCollection = m_TreeView.GetSelectedItems<INode>();
-        if (selectionCollection.Count() > 0)
-        {
-            var ruleLabel = m_RuleEditorContainer.Q<VisualElement>("RuleEditor").Q<Label>();
-            var selection = selectionCollection.First();
-            var leafNode = selection.data as Leaf;
-            var rule = leafNode.Rule;
-            ruleLabel.text = $"Got the Rule from the Leaf Node with id: {selection.id}\nrule is now expty by defualt: {rule}";
-        }
-    }
 
 
 
@@ -198,7 +191,6 @@ public class SequenceTreeView : NodesWindow
         if (m_TreeView.GetSelectedItems<INode>().First().data.GetType() == typeof(Leaf)) return DropdownMenuAction.Status.Disabled;
         return DropdownMenuAction.Status.Normal;
     }
-
 
     public void AddNodeToSelection(string nodeType)
     {
@@ -236,8 +228,6 @@ if (node.GetType() != typeof(Leaf))
 }
 */
 #endregion
-
-
 #region Button for each node
 /*
 public class TestElement : VisualElement

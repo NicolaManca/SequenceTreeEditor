@@ -12,10 +12,11 @@
                 <uie:ToolbarButton tabindex="-1" text="Add Action" display-tooltip-when-elided="true" name="AddActionButton" style="-unity-text-align: middle-left; border-right-width: 0; -unity-font-style: normal;" />
                 <uie:ToolbarButton tabindex="-1" text="Add Condition" display-tooltip-when-elided="true" name="AddConditionButton" style="-unity-text-align: middle-left;" />
                 <uie:ToolbarSpacer name="Spacer" style="flex-grow: 1;" />
+                <ui:Label tabindex="-1" text="Error: Invalid Rule!" display-tooltip-when-elided="true" name="ErrorMessage" style="-unity-text-align: middle-left; padding-right: 10px; color: rgba(217, 33, 33, 255); display: none;" />
                 <uie:ToolbarButton tabindex="-1" text="Discard Rule" name="DiscardButton" style="-unity-text-align: middle-left;" />
                 <uie:ToolbarButton tabindex="-1" text="Save Rule" name="SaveButton" style="border-right-width: 1px; border-left-width: 0; -unity-text-align: middle-left;" />
             </uie:Toolbar>
-            <ui:VisualElement name="RuleEditor" style="flex-direction: row; flex-grow: 1; margin-left: 0; margin-right: 0; margin-top: 0; margin-bottom: 0; background-color: rgba(60, 60, 60, 255); padding-left: 0; padding-right: 0; padding-top: 0; padding-bottom: 3px;">
+            <ui:VisualElement name="RuleEditor" style="flex-direction: row; flex-grow: 1; margin-left: 0; margin-right: 0; margin-top: 0; margin-bottom: 0; background-color: rgb(60, 60, 60); padding-left: 0; padding-right: 0; padding-top: 0; padding-bottom: 3px;">
                 <ui:VisualElement name="Headers" style="background-color: rgb(45, 45, 45);">
                     <ui:VisualElement name="Event" style="min-height: 50px;">
                         <ui:Label tabindex="-1" text="When" display-tooltip-when-elided="true" name="EventLabel" style="-unity-text-align: middle-center; -unity-font-style: bold; font-size: 14px; padding-left: 16px; padding-right: 16px; padding-top: 2px; padding-bottom: 2px; background-color: rgb(30, 30, 30); min-height: 50px;" />
