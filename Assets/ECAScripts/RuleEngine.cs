@@ -753,7 +753,7 @@ namespace ECARules4All.RuleEngine
                                 ECARules4AllOperations.supportsMathematicalConditionChecks.TryGetValue(a.type,
                                     out var res);
                                 //If the operation is supported check whether is true or not
-                                if (!res && !mathValues.Contains(checkSymbol) || res)
+                                if (compareWith != null && !res && !mathValues.Contains(checkSymbol) || res)
                                 {
                                     if (a.Name == GetProperty() && m.FieldType == GetValueType() ||
                                         a.Name == GetProperty() && m.FieldType == typeof(ECABoolean) &&
@@ -1144,6 +1144,7 @@ namespace ECARules4All.RuleEngine
 
         public override string ToString()
         {
+            if (a_subject == null) return null;
             var actionString = $"{a_subject.name} {a_verb}";
             actionString += a_object == null ? "" : $" {a_object}";
             actionString += a_modifier == null ? "" : $" {a_modifier}";

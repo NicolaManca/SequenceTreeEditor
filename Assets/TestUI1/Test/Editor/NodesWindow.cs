@@ -3,8 +3,12 @@ using UnityEngine;
 using UnityEditor;
 using UnityEngine.UIElements;
 using ECARules4All.RuleEngine;
+using System.Linq;
+using System.Diagnostics.CodeAnalysis;
 
-// Base class for all windows that display planet information.
+
+
+// Base class for all windows that display node information.
 public class NodesWindow : EditorWindow
 {
     public static Dictionary<string, string> InternalNodeNames = new(){ 
@@ -15,7 +19,6 @@ public class NodesWindow : EditorWindow
     [SerializeField]
     protected VisualTreeAsset uxml;
 
-    // Nested interface that can be either a single planet or a group of planets.
     protected interface INode
     {
         public int ParentId
@@ -42,7 +45,6 @@ public class NodesWindow : EditorWindow
         }
     }
 
-    // Nested class that represents a planet.
     protected class Leaf : INode
     {
         public int ParentId
@@ -81,7 +83,6 @@ public class NodesWindow : EditorWindow
         }
     }
 
-    // Nested class that represents a group of planets.
     protected class Internal : INode
     {
         public int ParentId

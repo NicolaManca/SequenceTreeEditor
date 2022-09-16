@@ -154,35 +154,33 @@ public class RuleEditorManager
         invalidRuleErrorMessage = ruleEditorContainer.Q<VisualElement>("RuleEditorToolbar").Q<Label>("ErrorMessage");
     }
 
-    public RuleEditorManager(Rule rule = null)
+    public RuleEditorManager(Rule rule, int id = 0)
     {
         ConditionsContainer.Q<ScrollView>("ConditionsSV").Clear();
         ActionsSV.Clear();
 
         //Get the event if there is already a Rule inside the Leaf node.
-        if (rule != null) eventAction = rule.GetEvent();
         //Setup the event.
         //eventAction can either be the event in the Rule or a new blank Action.
+        if (rule != null)
+        {
+            eventAction = rule.GetEvent();
+        } 
         eventManager.SetUpDropdownMenus(EventContainer, eventAction);
 
         //Get the actions if there is already a Rule inside the Leaf node.
-        if (rule != null) actions = rule.GetActions();
-
+        if (rule != null) 
+            actions = rule.GetActions();
         //Add the actions (Only one if there is no Rule).
         foreach (var action in actions)
             AddAction(action);
 
         //Get the conditions if there is already a Rule inside the Leaf node.
-        if (rule != null && rule.GetCondition() != null)
-        {
-            Debug.Log(rule.GetCondition());
+        if (rule != null && rule.GetCondition() != null) 
             conditions = CustomCondition.ParseConditionToCustom(rule.GetCondition());
-        }
         //Add the conditions (None if there is no Rule).
         foreach (var condition in conditions)
-        {
             AddCondition(condition);
-        }
     }
 
     public void AddAction(Action action, bool isNew = false)
@@ -269,6 +267,7 @@ public class RuleEditorManager
     {
         //Discard Event
         eventAction = new Action();
+        var eventManager = new ActionDropdownsManager();
         eventManager.SetUpDropdownMenus(EventContainer, eventAction);
 
         //Discard Actions
@@ -294,7 +293,6 @@ public class RuleEditorManager
             return new Rule(eventAction, actions);
 
         //If any condtion is not valid, return null.
-        Debug.Log($"Start checking conditions. Total: {conditions.Count}");
         foreach (var cC in conditions)
             if (!cC.condition.IsValid()) return null;
         //Parse from CustomCondition to Condition.
@@ -404,12 +402,12 @@ public class ActionDropdownsManager
         inputDrop = objectPart.Q<VisualElement>("InputField").Q<DropdownField>("Dropdown");
 
 
-        subjectDrop.RegisterValueChangedCallback(delegate { DropdownValueChangedSubject(subjectDrop, action); });
-        verbDrop.RegisterValueChangedCallback(delegate { DropdownValueChangedVerb(verbDrop, action); });
+        subjectDrop.RegisterValueChangedCallback(evt => { DropdownValueChangedSubject(subjectDrop, action); });
+        verbDrop.RegisterValueChangedCallback(evt => { DropdownValueChangedVerb(verbDrop, action); });
         //object with the value e.g. changes "active" ...
-        objectVerbDrop.RegisterValueChangedCallback(delegate { DropdownValueChangedObjectValue(objectVerbDrop, action); });
+        objectVerbDrop.RegisterValueChangedCallback(evt => { DropdownValueChangedObjectValue(objectVerbDrop, action); });
         //object without the value e.g. looks at gameobject
-        objectDrop.RegisterValueChangedCallback(delegate { DropdownValueChangedObject(objectDrop, action); });
+        objectDrop.RegisterValueChangedCallback(evt => { DropdownValueChangedObject(objectDrop, action); });
 
         //prepDrop.RegisterValueChangedCallback(delegate { action.SetModifier(prepDrop.value); });
         //valueDrop.RegisterValueChangedCallback(delegate { action.SetModifierValue(valueDrop.value); });
@@ -418,12 +416,12 @@ public class ActionDropdownsManager
         //decimalField.RegisterValueChangedCallback(delegate { action.SetModifierValue(decimalField.value); });
         //inputDrop.RegisterValueChangedCallback(delegate { action.SetModifierValue(inputDrop.value); });
 
-        prepDrop.RegisterValueChangedCallback(delegate { DropdownValueChangedPrep(prepDrop, action); });
-        valueDrop.RegisterValueChangedCallback(delegate { DropdownValueChangedInput(valueDrop.value, action); });
-        textField.RegisterValueChangedCallback(delegate { DropdownValueChangedInput(textField.value, action); });
-        intField.RegisterValueChangedCallback(delegate { DropdownValueChangedInput(intField.value, action); });
-        decimalField.RegisterValueChangedCallback(delegate { DropdownValueChangedInput(decimalField.value, action); });
-        inputDrop.RegisterValueChangedCallback(delegate { DropdownValueChangedInput(inputDrop.value, action); });
+        prepDrop.RegisterValueChangedCallback(evt => { DropdownValueChangedPrep(prepDrop, action); });
+        valueDrop.RegisterValueChangedCallback(evt => { DropdownValueChangedInput(valueDrop.value, action); });
+        textField.RegisterValueChangedCallback(evt => { DropdownValueChangedInput(textField.value, action); });
+        intField.RegisterValueChangedCallback(evt => { DropdownValueChangedInput(intField.value, action); });
+        decimalField.RegisterValueChangedCallback(evt => { DropdownValueChangedInput(decimalField.value, action); });
+        inputDrop.RegisterValueChangedCallback(evt => { DropdownValueChangedInput(inputDrop.value, action); });
 
         SetUpSubject(subjectDrop, action);
     }
@@ -954,34 +952,34 @@ public class ConditionDropdownsManager
 
         //Listener
         andOrDrop.RegisterValueChangedCallback(delegate { cCondition.op = CustomCondition.ParseStringToConditionType(andOrDrop.value); });
-        toCheckDrop.RegisterValueChangedCallback(delegate { DropdownValueChangedToCheck(toCheckDrop, cCondition); });
+        toCheckDrop.RegisterValueChangedCallback(delegate { DropdownValueChangedToCheck(toCheckDrop, cCondition.condition); });
         
-        propertyDrop.RegisterValueChangedCallback(delegate { DropdownValueChangedProperty(propertyDrop, cCondition); });
-        checkSymbolDrop.RegisterValueChangedCallback(delegate { DropdownValueChangedCheckSymbol(checkSymbolDrop, cCondition); });
+        propertyDrop.RegisterValueChangedCallback(delegate { DropdownValueChangedProperty(propertyDrop, cCondition.condition); });
+        checkSymbolDrop.RegisterValueChangedCallback(delegate { DropdownValueChangedCheckSymbol(checkSymbolDrop, cCondition.condition); });
 
         //compareWithDrop.RegisterValueChangedCallback(delegate { cCondition.condition.SetValueToCompare(compareWithDrop.value); });
         //textField.RegisterValueChangedCallback(delegate { cCondition.condition.SetValueToCompare(textField.value); });
         //intField.RegisterValueChangedCallback(delegate { cCondition.condition.SetValueToCompare(intField.value); });
         //decimalField.RegisterValueChangedCallback(delegate { cCondition.condition.SetValueToCompare(decimalField.value); });
         
-        compareWithDrop.RegisterValueChangedCallback(delegate { DropdownValueChangedCompareValue(compareWithDrop.value, cCondition); });
-        textField.RegisterValueChangedCallback(delegate { DropdownValueChangedCompareValue(textField.value, cCondition); });
-        intField.RegisterValueChangedCallback(delegate { DropdownValueChangedCompareValue(intField.value, cCondition); });
-        decimalField.RegisterValueChangedCallback(delegate { DropdownValueChangedCompareValue(decimalField.value, cCondition); });
+        compareWithDrop.RegisterValueChangedCallback(delegate { DropdownValueChangedCompareValue(compareWithDrop.value, cCondition.condition); });
+        textField.RegisterValueChangedCallback(delegate { DropdownValueChangedCompareValue(textField.value, cCondition.condition); });
+        intField.RegisterValueChangedCallback(delegate { DropdownValueChangedCompareValue(intField.value, cCondition.condition); });
+        decimalField.RegisterValueChangedCallback(delegate { DropdownValueChangedCompareValue(decimalField.value, cCondition.condition); });
 
 
         //at start we must populate the first dropdown
-        PopulateToCheckDropdown(cCondition);
+        PopulateToCheckDropdown(cCondition.condition);
     }
 
 
-    private void PopulateToCheckDropdown(CustomCondition cCondition)
+    private void PopulateToCheckDropdown(SimpleCondition condition)
     {
         toCheckDrop.choices.Clear();
         toCheckDictionary = RuleUtils.FindSubjects();
 
         string conditionSubjectValue = "<no-value>";
-        GameObject conditionSubject = cCondition.condition.GetSubject();
+        GameObject conditionSubject = condition.GetSubject();
 
         // Used to sort each dropdown's options
         List<string> entries = new List<string>();
@@ -1000,17 +998,27 @@ public class ConditionDropdownsManager
         }
         entries.Sort();
         toCheckDrop.choices = entries;
-        toCheckDrop.value = conditionSubjectValue;
+        int index = entries.IndexOf(conditionSubjectValue);
+        toCheckDrop.index = index;
     }
-    private void DropdownValueChangedToCheck(DropdownField toCheck, CustomCondition cCondition)
+    private void DropdownValueChangedToCheck(DropdownField toCheck, SimpleCondition condition)
     {
         RuleEditorManager.SetErrorMessageVisibility(DisplayStyle.None);
         //if previous activated, hide next elements
-        DisableNextComponent("toCheck");
+        DisableNextComponent("toCheck", condition);
+
+        string conditionPropertyValue = "<no-value>";
+        string conditionProperty = condition.GetProperty();
+        if (conditionProperty != null && conditionProperty != "")
+            conditionPropertyValue = conditionProperty;
 
         //retrieve selected string and gameobject
         string selectedSubjectString = toCheck.value;
-        if (selectedSubjectString == "<no-value>") return;
+        if (selectedSubjectString == "<no-value>")
+        {
+            condition.SetSubject(null);
+            return;
+        }
 
         //activate next element
         propertyDrop.style.display = DisplayStyle.Flex;
@@ -1021,8 +1029,9 @@ public class ConditionDropdownsManager
         string selectedCutString = Regex.Match(selectedSubjectString, "[^ ]* (.*)").Groups[1].Value;
         toCheckSelectedType = Regex.Match(selectedSubjectString, "^[^ ]+").Value;
         previousToCheckSelected = toCheckSelected;
+
         toCheckSelected = GameObject.Find(selectedCutString).gameObject;
-        cCondition.condition.SetSubject(toCheckSelected);
+        condition.SetSubject(toCheckSelected);
 
         stateVariables = RuleUtils.FindStateVariables(toCheckSelected);
 
@@ -1041,24 +1050,28 @@ public class ConditionDropdownsManager
         }
         entries.Sort();
         propertyDrop.choices = entries;
-        propertyDrop.SetValueWithoutNotify("<no-value>");
+        propertyDrop.value = conditionPropertyValue;
     }
-    private void DropdownValueChangedProperty(DropdownField property, CustomCondition cCondition)
+    private void DropdownValueChangedProperty(DropdownField property, SimpleCondition condition)
     {
         RuleEditorManager.SetErrorMessageVisibility(DisplayStyle.None);
         //if previous activated, hide next elements
-        DisableNextComponent("property");
+        DisableNextComponent("property", condition);
 
         //retrieve selected string and type
         propertySelected = property.value;
-        if (propertySelected == "<no-value>") return;
+        if (propertySelected == "<no-value>")
+        {
+            condition.SetProperty(null);
+            return;
+        }
 
         //activate next element
         checkSymbolDrop.style.display = DisplayStyle.Flex;
         checkSymbolDrop.choices.Clear();
 
         if (propertySelected.StartsWith("rotation ")) propertySelected = "rotation";
-        cCondition.condition.SetProperty(propertySelected);
+        condition.SetProperty(propertySelected);
 
         //thanks to the dictionary, we can retrieve the type:
         ECARules4AllType type = stateVariables[propertySelected].Item1;
@@ -1093,15 +1106,19 @@ public class ConditionDropdownsManager
         }
         entries.Sort();
         checkSymbolDrop.choices = entries;
-        checkSymbolDrop.SetValueWithoutNotify("<no-value>");
+        checkSymbolDrop.value = "<no-value>";
     }
-    private void DropdownValueChangedCheckSymbol(DropdownField checkSymbol, CustomCondition cCondition)
+    private void DropdownValueChangedCheckSymbol(DropdownField checkSymbol, SimpleCondition condition)
     {
         RuleEditorManager.SetErrorMessageVisibility(DisplayStyle.None);
         //retrieve selected string 
         selectedSymbol = checkSymbol.value;
-        if (selectedSymbol == "<no-value>") return;
-        cCondition.condition.SetSymbol(selectedSymbol);
+        if (selectedSymbol == "<no-value>") 
+        {
+            condition.SetSymbol(null);
+            return; 
+        }
+        condition.SetSymbol(selectedSymbol);
 
         ECARules4AllType type = stateVariables[propertySelected].Item1;
         compareWithType = type;
@@ -1118,7 +1135,7 @@ public class ConditionDropdownsManager
                 // Add colors to dropdown
                 foreach (KeyValuePair<string, Color> kvp in ActionDropdownsManager.colorDict)
                     entries.Add(kvp.Key);
-                compareWithDrop.SetValueWithoutNotify("<no-value>");
+                compareWithDrop.value = "<no-value>";
                 //if previous activated, hide the input fields
                 textField.style.display = DisplayStyle.None;
                 intField.style.display = DisplayStyle.None;
@@ -1129,7 +1146,7 @@ public class ConditionDropdownsManager
                 compareWithDrop.choices.Clear();
                 compareWithDrop.style.display = DisplayStyle.Flex;
                 entries.Add("<no-value>");
-                compareWithDrop.SetValueWithoutNotify("<no-value>");
+                compareWithDrop.value = "<no-value>";
                 //if previous activated, hide the input fields
                 textField.style.display = DisplayStyle.None;
                 intField.style.display = DisplayStyle.None;
@@ -1150,7 +1167,7 @@ public class ConditionDropdownsManager
                     entries.Add("true");
                     entries.Add("false");
                 }
-                compareWithDrop.SetValueWithoutNotify("<no-value>");
+                compareWithDrop.value = "<no-value>";
                 //if previous activated, hide the input fields
                 textField.style.display = DisplayStyle.None;
                 intField.style.display = DisplayStyle.None;
@@ -1177,7 +1194,7 @@ public class ConditionDropdownsManager
                     entries.Add("<no-value>");
                     entries.Add("First");
                     entries.Add("Third");
-                    compareWithDrop.SetValueWithoutNotify("<no-value>");
+                    compareWithDrop.value = "<no-value>";
                     //if previous activated, hide the input fields
                     textField.style.display = DisplayStyle.None;
                     intField.style.display = DisplayStyle.None;
@@ -1188,67 +1205,76 @@ public class ConditionDropdownsManager
         }
         entries.Sort();
         compareWithDrop.choices = entries;
-        compareWithDrop.SetValueWithoutNotify("<no-value>");
+        compareWithDrop.value = "no-value>";
     }
-    private void DropdownValueChangedCompareValue(object value, CustomCondition cCondition)
+    private void DropdownValueChangedCompareValue(object value, SimpleCondition condition)
     {
         RuleEditorManager.SetErrorMessageVisibility(DisplayStyle.None);
-        if ((value as string) == "<no-value>") cCondition.condition.SetValueToCompare(null);
+        if ((value as string) == "<no-value>")
+        {
+            condition.SetValueToCompare(null);
+            return;
+        }
         switch (compareWithType)
         {
             case ECARules4AllType.Color:
-                cCondition.condition.SetValueToCompare(ActionDropdownsManager.colorDict[(string)value]);
+                condition.SetValueToCompare(ActionDropdownsManager.colorDict[(string)value]);
                 break;
             case ECARules4AllType.Position:
-                cCondition.condition.SetValueToCompare(value);
+                condition.SetValueToCompare(value);
                 break;
             case ECARules4AllType.Boolean:
                 //Copied from DropdownValueChangedCheckSymbol.
                 if (toCheckSelectedType == "ECALight" || toCheckSelectedType == "Light")
-                    cCondition.condition.SetValueToCompare((value as string) == "on");
+                    condition.SetValueToCompare((value as string) == "on");
                 else
-                    cCondition.condition.SetValueToCompare((value as string) == "true");
+                    condition.SetValueToCompare((value as string) == "true");
                 break;
             case ECARules4AllType.Float:
             case ECARules4AllType.Time:
             case ECARules4AllType.Rotation:
-                cCondition.condition.SetValueToCompare((float)value);
+                condition.SetValueToCompare((float)value);
                 break;
             case ECARules4AllType.Integer:
-                cCondition.condition.SetValueToCompare((int)value);
+                condition.SetValueToCompare((int)value);
                 break;
             case ECARules4AllType.Text:
-                cCondition.condition.SetValueToCompare((string)value);
+                condition.SetValueToCompare((string)value);
                 break;
             case ECARules4AllType.Identifier:
                 //TODO alias
                 if (propertySelected == "pov")
-                    cCondition.condition.SetValueToCompare((string)value);
+                    condition.SetValueToCompare((string)value);
                 break;
         }
     }
 
-    void DisableNextComponent(string changedField)
+    void DisableNextComponent(string changedField, SimpleCondition condition)
     {
         switch (changedField)
         {
             // ToCheck
             case "toCheck":
                 propertyDrop.style.display = DisplayStyle.None;
+                condition.SetProperty(null);
                 checkSymbolDrop.style.display = DisplayStyle.None;
+                condition.SetSymbol(null);
                 compareWithDrop.style.display = DisplayStyle.None;
                 textField.style.display = DisplayStyle.None;
                 intField.style.display = DisplayStyle.None;
                 decimalField.style.display = DisplayStyle.None;
+                condition.SetValueToCompare(null);
 
                 break;
             // Property
             case "property":
                 checkSymbolDrop.style.display = DisplayStyle.None;
+                condition.SetSymbol(null);
                 compareWithDrop.style.display = DisplayStyle.None;
                 textField.style.display = DisplayStyle.None;
                 intField.style.display = DisplayStyle.None;
                 decimalField.style.display = DisplayStyle.None;
+                condition.SetValueToCompare(null);
                 break;
         }
     }

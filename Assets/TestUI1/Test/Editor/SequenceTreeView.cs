@@ -22,6 +22,7 @@ public class SequenceTreeView : NodesWindow
     private VisualElement m_RuleEditorContainer;
     private int m_PrevSelectedNode = -1;
 
+
     [MenuItem("Sequence/Sequence Tree")]
     static void Summon()
     {
@@ -81,8 +82,7 @@ public class SequenceTreeView : NodesWindow
         m_RuleEditorContainer = rootVisualElement.Q<VisualElement>("RuleEditorContainer");
         m_RuleEditorContainer.SetEnabled(false);
         RuleEditorManager.SetupManager(m_RuleEditorContainer);
-        
-
+;
 
     }
 
@@ -143,6 +143,7 @@ public class SequenceTreeView : NodesWindow
     private void UpdateRuleEditorStatus(IEnumerable<object> obj)
     {
         if (m_TreeView.selectedIndex == m_PrevSelectedNode) return;
+        var previousNode = m_TreeView.GetItemDataForIndex<INode>(m_PrevSelectedNode);
         m_PrevSelectedNode = m_TreeView.selectedIndex;
         var selection = obj.First() as INode;
         if (selection.GetType() != typeof(Leaf))
@@ -150,19 +151,26 @@ public class SequenceTreeView : NodesWindow
             m_RuleEditorContainer.SetEnabled(false);
             return;
         }
+        
 
         m_RuleEditorContainer.SetEnabled(true);
+
+
         var rule = (selection as Leaf).Rule;
-        var ruleEditorManager = new RuleEditorManager(rule);
+        Debug.Log(rule);
+        RuleEditorManager ruleEditorManager = null;
+        //if (selection.Id == 1)
+            
+        ruleEditorManager = new RuleEditorManager(rule, selection.Id);
 
         //Setup RuleEditor Toolbar Menu
-        var addActionBtn = rootVisualElement.Q<ToolbarButton>("AddActionButton");
-        var addConditionBtn = rootVisualElement.Q<ToolbarButton>("AddConditionButton");
-        var discardBtn = rootVisualElement.Q<ToolbarButton>("DiscardButton");
-        var saveBtn = rootVisualElement.Q<ToolbarButton>("SaveButton");
-        addActionBtn.clickable = new Clickable(() => { ruleEditorManager.AddAction(new Action(), true); });
-        addConditionBtn.clickable = new Clickable(() => { ruleEditorManager.AddCondition(new CustomCondition(), true); });
-        discardBtn.clickable = new Clickable(() => { ruleEditorManager.DiscardRule(); });
+        var addActionBtn = m_RuleEditorContainer.Q<ToolbarButton>("AddActionButton");
+        var addConditionBtn = m_RuleEditorContainer.Q<ToolbarButton>("AddConditionButton");
+        var discardBtn = m_RuleEditorContainer.Q<ToolbarButton>("DiscardButton");
+        var saveBtn = m_RuleEditorContainer.Q<ToolbarButton>("SaveButton");
+        //addActionBtn.clickable = new Clickable(() => { ruleEditorManager.AddAction(new Action(), true); });
+        //addConditionBtn.clickable = new Clickable(() => { ruleEditorManager.AddCondition(new CustomCondition(), true); });
+        //discardBtn.clickable = new Clickable(() => { ruleEditorManager.DiscardRule(); });
         saveBtn.clickable = new Clickable(() => { SaveRuleIntoNode(selection as Leaf, ruleEditorManager); });
 
     }
@@ -176,7 +184,8 @@ public class SequenceTreeView : NodesWindow
             RuleEditorManager.SetErrorMessageVisibility(DisplayStyle.Flex);
             return;
         }
-        node.Rule = rule;
+        Debug.Log($"Rule Saved!\nRule: {rule}");
+        node.Rule = new Rule(rule.GetEvent(), rule.GetCondition(), rule.GetActions());
         node.Name = rule.ToString();
         m_TreeView.RefreshItems();
     }
