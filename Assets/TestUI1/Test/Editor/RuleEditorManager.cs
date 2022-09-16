@@ -155,7 +155,7 @@ public class RuleEditorManager
         invalidRuleErrorMessage = ruleEditorContainer.Q<VisualElement>("RuleEditorToolbar").Q<Label>("ErrorMessage");
     }
 
-    public RuleEditorManager(Rule rule, int id = 0)
+    public RuleEditorManager(Rule rule)
     {
         EventContainer.Clear();
         ActionsSV.Clear();
@@ -460,6 +460,8 @@ public class ActionDropdownsManager
         entries.Sort();
         subjectDrop.choices = entries;
         subjectDrop.value = actionSubjectValue;
+        if (actionSubjectValue != "<no-value>")
+            DropdownValueChangedSubject(subjectDrop, action);
 
     }
     void DropdownValueChangedSubject(DropdownField subjectDropdown, Action action)
@@ -508,6 +510,14 @@ public class ActionDropdownsManager
 
         verbsString = RuleUtils.PopulateVerbsString(verbsItem);
 
+        string actionVerb = action.GetActionMethod();
+        string actionVerbValue = "<no-value>";
+        if (actionVerb != null)
+        {
+            actionVerb = actionVerb.Split(' ').First();
+            actionVerbValue = verbsString.ContainsKey(actionVerb) ? actionVerb : "<no-value>";
+        }
+
         // Add options to verb dropdown
         List<string> entries = new List<string>();
         entries.Add("<no-value>");
@@ -517,7 +527,9 @@ public class ActionDropdownsManager
         }
         entries.Sort();
         verbDrop.choices = entries;
-        verbDrop.value = "<no-value>";
+        verbDrop.value = actionVerbValue;
+        //if (actionVerbValue != "<no-value>")
+        //    DropdownValueChangedVerb(verbDrop, action);
     }
     void DropdownValueChangedVerb(DropdownField verbDrop, Action action)
     {
@@ -527,6 +539,22 @@ public class ActionDropdownsManager
         int verbSelectedIndex = verbDrop.index;
 
         DisableNextComponent("verb", action);
+
+        string actionObjVerb = action.GetActionMethod();
+        string actionObjVerbValue = "<no-value>";
+        if (actionObjVerb != null)
+        {
+            actionObjVerb = actionObjVerb.Split(' ').Length > 1 ? actionObjVerb.Split(' ')[1] : "<no-value>";
+            actionObjVerbValue = verbsString.ContainsKey(actionObjVerb) ? actionObjVerbValue : "<no-value>";
+        }
+
+        string actionObj = action.GetActionMethod();
+        string actionObjValue = "<no-value>";
+        if (actionObj != null)
+        {
+            actionObj = actionObj.Split(' ').Length > 1 ? actionObj.Split(' ')[1] : "<no-value>";
+            actionObjValue = verbsString.ContainsKey(actionObj) ? actionObjValue : "<no-value>";
+        }
 
 
         if (verbSelectedString == "<no-value>")
@@ -843,7 +871,7 @@ public class ActionDropdownsManager
             case "subject":
                 verbDrop.style.display = DisplayStyle.None;
                 objectVerbDrop.style.display = DisplayStyle.None;
-                action.SetActionMethod(null);
+                //action.SetActionMethod(null);
 
                 prefixThe.style.display = DisplayStyle.None;
                 prepDrop.style.display = DisplayStyle.None;
@@ -853,9 +881,9 @@ public class ActionDropdownsManager
                 intField.style.display = DisplayStyle.None;
                 decimalField.style.display = DisplayStyle.None;
                 inputDrop.style.display = DisplayStyle.None;
-                action.SetObject(null);
-                action.SetModifier(null);
-                action.SetModifierValue(null);
+                //action.SetObject(null);
+                //action.SetModifier(null);
+                //action.SetModifierValue(null);
                 break;
             // Change verb
             case "verb":
@@ -869,16 +897,16 @@ public class ActionDropdownsManager
                 intField.style.display = DisplayStyle.None;
                 decimalField.style.display = DisplayStyle.None;
                 inputDrop.style.display = DisplayStyle.None;
-                action.SetObject(null);
-                action.SetModifier(null);
-                action.SetModifierValue(null);
+                //action.SetObject(null);
+                //action.SetModifier(null);
+                //action.SetModifierValue(null);
                 break;
             // Change object
             case "object":
                 valueDrop.style.display = DisplayStyle.None;
                 valueDrop.choices.Clear();
-                action.SetModifier(null);
-                action.SetModifierValue(null);
+                //action.SetModifier(null);
+                //action.SetModifierValue(null);
                 break;
         }
     }
