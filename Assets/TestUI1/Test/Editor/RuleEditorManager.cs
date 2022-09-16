@@ -128,11 +128,12 @@ public class RuleEditorManager
 
     private static Label invalidRuleErrorMessage;
 
+    private static readonly VisualTreeAsset m_EventPrefabUxml = Resources.Load<VisualTreeAsset>("EventPrefab");
     private static readonly VisualTreeAsset m_ActionPrefabUxml = Resources.Load<VisualTreeAsset>("ActionPrefab");
     private static readonly VisualTreeAsset m_ConditionPrefabUxml = Resources.Load<VisualTreeAsset>("ConditionPrefab");
     
     
-    private ActionDropdownsManager eventManager = new();
+    //private ActionDropdownsManager eventManager = new();
     //private List<ConditionDropdownsManager> conditionManagers = new();
     //private List<ActionDropdownsManager> actionManagers = new();
 
@@ -144,7 +145,7 @@ public class RuleEditorManager
     public static void SetupManager(VisualElement ruleEditorContainer)
     {
         var ruleEditor = ruleEditorContainer.Q<VisualElement>("RuleEditor");
-        EventContainer = ruleEditor.Q<VisualElement>("RuleParts").Q<VisualElement>("Event");
+        EventContainer = ruleEditor.Q<VisualElement>("RuleParts").Q<VisualElement>("EventC");
 
         ConditionsContainer = ruleEditor.Q<VisualElement>("RuleParts").Q<VisualElement>("Conditions");
         conditionHeader = ruleEditor.Q<VisualElement>("Headers").Q<VisualElement>("Conditions");
@@ -156,8 +157,9 @@ public class RuleEditorManager
 
     public RuleEditorManager(Rule rule, int id = 0)
     {
-        ConditionsContainer.Q<ScrollView>("ConditionsSV").Clear();
+        EventContainer.Clear();
         ActionsSV.Clear();
+        ConditionsContainer.Q<ScrollView>("ConditionsSV").Clear();
 
         //Get the event if there is already a Rule inside the Leaf node.
         //Setup the event.
@@ -165,8 +167,13 @@ public class RuleEditorManager
         if (rule != null)
         {
             eventAction = rule.GetEvent();
-        } 
-        eventManager.SetUpDropdownMenus(EventContainer, eventAction);
+        }
+        VisualElement eventPrefab = m_EventPrefabUxml.CloneTree();
+
+        var eventManager= new ActionDropdownsManager();
+        eventManager.SetUpDropdownMenus(eventPrefab, eventAction);
+        EventContainer.Add(eventPrefab);
+
 
         //Get the actions if there is already a Rule inside the Leaf node.
         if (rule != null) 
