@@ -123,6 +123,7 @@ public class CustomCondition
 
 public class RuleEditorManager
 {
+    #region Fields
     public static VisualElement EventContainer { get; set; }
     public static VisualElement ConditionsContainer { get; set; }
     private static VisualElement conditionHeader;  
@@ -133,16 +134,11 @@ public class RuleEditorManager
     private static readonly VisualTreeAsset m_EventPrefabUxml = Resources.Load<VisualTreeAsset>("EventPrefab");
     private static readonly VisualTreeAsset m_ActionPrefabUxml = Resources.Load<VisualTreeAsset>("ActionPrefab");
     private static readonly VisualTreeAsset m_ConditionPrefabUxml = Resources.Load<VisualTreeAsset>("ConditionPrefab");
-    
-    
-    //private ActionDropdownsManager eventManager = new();
-    //private List<ConditionDropdownsManager> conditionManagers = new();
-    //private List<ActionDropdownsManager> actionManagers = new();
 
     private Action eventAction = new();
     private List<Action> actions = new() { new Action() };
     private List<CustomCondition> conditions = new();
-
+    #endregion
 
     public static void SetupManager(VisualElement ruleEditorContainer)
     {
@@ -317,7 +313,7 @@ public class RuleEditorManager
 
 public class ActionDropdownsManager
 {
-    #region Attributes
+    #region Fields
     //Action Dropdowns and TextField
     private DropdownField subjectDrop;
     private DropdownField verbDrop;
@@ -427,7 +423,6 @@ public class ActionDropdownsManager
 
         SetUpSubject(subjectDrop, action);
     }
-
 
     void SetUpSubject(DropdownField subjectDrop, Action action)
     {
@@ -991,7 +986,7 @@ public class ActionDropdownsManager
 
 public class ConditionDropdownsManager
 {
-    #region Attributes
+    #region Fields
     //Action Dropdowns and TextField
     private DropdownField toCheckDrop;
     private DropdownField propertyDrop;
