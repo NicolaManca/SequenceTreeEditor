@@ -760,10 +760,12 @@ public class RuleUtils : MonoBehaviour
 
     //Added to work with UnityEngine.UIElements.DropdownField
     public static void AddObjectPassiveVerbs(Dictionary<int, Dictionary<GameObject, string>> subjects, string comp,
-        DropdownField objDrop)
+        DropdownField objDrop, object actionObj)
     {
         bool found = false;
         ArrayList<string> resArrayList = new ArrayList<string>();
+
+        string objValue = "<no-value>";
 
         foreach (var subj in subjects)
         {
@@ -775,6 +777,8 @@ public class RuleUtils : MonoBehaviour
                     string type = FindInnerTypeNotBehaviour(var.Key);
                     type = RemoveECAFromString(type);
                     resArrayList.Add(type + " " + var.Key.name);
+                    if ((actionObj as GameObject) == var.Key)
+                        objValue = type + " " + var.Key.name;
                 }
             }
         }
@@ -792,7 +796,7 @@ public class RuleUtils : MonoBehaviour
             }
             entries.Sort();
             objDrop.choices = entries;
-            objDrop.SetValueWithoutNotify("<no-value>");
+            objDrop.value = objValue;
         }
     }
 
@@ -822,11 +826,13 @@ public class RuleUtils : MonoBehaviour
 
     //Added to work with UnityEngine.UIElements.DropdownField
     public static void AddObjectActiveVerbs(Dictionary<int, Dictionary<GameObject, string>> subjects, string comp,
-        DropdownField objDrop, GameObject subjectSelected)
+        DropdownField objDrop, GameObject subjectSelected, object actionObj)
     {
         // Used to sort each dropdown's options
         List<string> entries = new List<string>();
         entries.Add("<no-value>");
+
+        string objValue = "<no-value>";
 
         for (int i = 0; i < subjects.Count; i++)
         {
@@ -839,12 +845,14 @@ public class RuleUtils : MonoBehaviour
                     type = RemoveECAFromString(type);
                     // objDrop.options.Add(new Dropdown.OptionData(type + " " + entry.Key.name));
                     entries.Add(type + " " + entry.Key.name);
+                    if ((actionObj as GameObject) == entry.Key)
+                        objValue = type + " " + entry.Key.name;
                 }
             }
         }
         entries.Sort();
         objDrop.choices = entries;
-        objDrop.SetValueWithoutNotify("<no-value>");
+        objDrop.value = objValue;
     }
 
     public static void LoadRulesAndAddToUI(string path)

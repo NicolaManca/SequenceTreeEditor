@@ -4,6 +4,7 @@ using System.Linq;
 using System.Reflection;
 using ECAScripts.Utils;
 using JetBrains.Annotations;
+using Unity.VisualScripting;
 using UnityEngine;
 
 namespace ECARules4All.RuleEngine
@@ -400,7 +401,7 @@ namespace ECARules4All.RuleEngine
     ///<para/>
     ///See also: <seealso cref="Action"/>, <seealso cref="Condition"/>
     ///</summary>
-    public class Rule
+    public class Rule : ICloneable
     {
         private Action Event;
         private Condition conditions;
@@ -474,11 +475,33 @@ namespace ECARules4All.RuleEngine
 
         public override string ToString()
         {
-            string ruleString = $"When the {Event}, Then the";
+            string ruleString = $"When the {Event}, Then";
 
-            actions.ForEach(action => ruleString += $" {action};");
+            actions.ForEach(action => ruleString += $" the {action};");
 
             return ruleString;
+        }
+
+        public object Clone()
+        {
+            Rule clone;
+            var eventAction = new Action(
+                Event.GetSubject(),
+                Event.GetActionMethod() != null ? string.Copy(Event.GetActionMethod()) : null,
+                Event.GetObject(),
+                Event.GetModifier() != null ? string.Copy(Event.GetModifier()) : null,
+                Event.GetModifierValue()
+            );
+            var clonedAction = new List<Action>();
+            actions.ForEach(action => clonedAction.Add(new Action(
+                action.GetSubject(),
+                action.GetActionMethod() != null ? string.Copy(Event.GetActionMethod()) : null,
+                action.GetObject(),
+                action.GetModifier() != null ? string.Copy(Event.GetModifier()) : null,
+                action.GetModifierValue()
+                )));
+            clone = new Rule(eventAction, conditions, clonedAction);
+            return clone;
         }
     }
 
@@ -557,6 +580,8 @@ namespace ECARules4All.RuleEngine
             : this(ConditionType.NONE, new List<Condition>())
         {
         }
+
+        public CompositeCondition(Condition condition) : this((condition as CompositeCondition).Op, (condition as CompositeCondition).children) { }
 
         public CompositeCondition(ConditionType type, List<Condition> conditions)
         {
@@ -913,8 +938,9 @@ namespace ECARules4All.RuleEngine
         private bool objects = false;
         private ActionType type;
 
-        public Action(){}
+        public Action() { }
 
+        public Action(Action action) : this(action.a_subject, action.a_verb, action.a_object, action.a_modifier, action.a_value) { }
         ///<summary>
         ///Declaration with all the elements (plus an explicit modifier)
         ///<para/>

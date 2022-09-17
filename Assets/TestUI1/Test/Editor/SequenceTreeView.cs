@@ -1,4 +1,5 @@
 using Antlr4.Runtime.Tree;
+using Codice.Client.BaseCommands;
 using ECARules4All.RuleEngine;
 using System;
 using System.Collections.Generic;
@@ -163,9 +164,8 @@ public class SequenceTreeView : NodesWindow
 
         var rule = (selection as Leaf).Rule;
         Debug.Log(rule);
-        RuleEditorManager ruleEditorManager = null;
-            
-        ruleEditorManager = new RuleEditorManager(rule);
+        if (rule != null) rule = rule.Clone() as Rule;
+        RuleEditorManager ruleEditorManager = new(rule);
 
         //Setup RuleEditor Toolbar Menu
         var addActionBtn = m_RuleEditorContainer.Q<ToolbarButton>("AddActionButton");
@@ -181,16 +181,17 @@ public class SequenceTreeView : NodesWindow
 
     private void SaveRuleIntoNode(Leaf node, RuleEditorManager ruleEditorManager)
     {
-        Debug.Log("Saving Rule...");
-        var rule = ruleEditorManager.GetRule();
-        if(rule == null)
+        Debug.Log($"Saving Rule...");
+        var ruleG = ruleEditorManager.GetRule();
+        if(ruleG == null)
         {
             RuleEditorManager.SetErrorMessageVisibility(DisplayStyle.Flex);
             return;
         }
-        Debug.Log($"Rule Saved!\nRule: {rule}");
-        node.Rule = new Rule(rule.GetEvent(), rule.GetCondition(), rule.GetActions());
-        node.Name = rule.ToString();
+        Debug.Log($"Rule Saved!\nRule: {ruleG}");
+
+        node.Rule = ruleG;
+        node.Name = ruleG.ToString();
         m_TreeView.RefreshItems();
     }
 

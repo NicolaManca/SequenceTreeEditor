@@ -1,5 +1,6 @@
 using ECARules4All;
 using ECARules4All.RuleEngine;
+using ECAScripts.Utils;
 using PlasticGui.Help.Conditions;
 using System;
 using System.Collections.Generic;
@@ -13,6 +14,7 @@ using UnityEngine;
 using UnityEngine.UIElements;
 using UnityEngine.XR.Interaction.Toolkit.Examples.UIRule.Prefabs;
 using static ECARules4All.RuleEngine.CompositeCondition;
+using static UnityEngine.EventSystems.EventTrigger;
 using Action = ECARules4All.RuleEngine.Action;
 using FloatField = UnityEngine.UIElements.FloatField;
 
@@ -416,13 +418,6 @@ public class ActionDropdownsManager
         //object without the value e.g. looks at gameobject
         objectDrop.RegisterValueChangedCallback(evt => { DropdownValueChangedObject(objectDrop, action); });
 
-        //prepDrop.RegisterValueChangedCallback(delegate { action.SetModifier(prepDrop.value); });
-        //valueDrop.RegisterValueChangedCallback(delegate { action.SetModifierValue(valueDrop.value); });
-        //textField.RegisterValueChangedCallback(delegate { action.SetModifierValue(textField.value); });
-        //intField.RegisterValueChangedCallback(delegate { action.SetModifierValue(intField.value); });
-        //decimalField.RegisterValueChangedCallback(delegate { action.SetModifierValue(decimalField.value); });
-        //inputDrop.RegisterValueChangedCallback(delegate { action.SetModifierValue(inputDrop.value); });
-
         prepDrop.RegisterValueChangedCallback(evt => { DropdownValueChangedPrep(prepDrop, action); });
         valueDrop.RegisterValueChangedCallback(evt => { DropdownValueChangedInput(valueDrop.value, action); });
         textField.RegisterValueChangedCallback(evt => { DropdownValueChangedInput(textField.value, action); });
@@ -467,19 +462,13 @@ public class ActionDropdownsManager
     void DropdownValueChangedSubject(DropdownField subjectDropdown, Action action)
     {
         RuleEditorManager.SetErrorMessageVisibility(DisplayStyle.None);
-        DisableNextComponent("subject", action);
         if (subjectDropdown.value == "<no-value>")
         {
+            DisableNextComponent("subject", action);
             action.SetSubject(null);
             return;
         }
-
-        verbDrop.style.display = DisplayStyle.Flex;
-        verbDrop.choices.Clear();
-
-        //When we go back from the rule list we assign the value to 0
-        if (subjectDropdown.index == 0) return;
-
+        
         //retrieve selected string and gameobject
         string selectedSubjectString = subjectDropdown.value;
 
@@ -488,6 +477,8 @@ public class ActionDropdownsManager
         previousSelectedSubject = subjectSelected;
 
         subjectSelected = GameObject.Find(selectedCutString).gameObject;
+        if(action.GetSubject() != null && subjectSelected != action.GetSubject())
+            DisableNextComponent("subject", action);
         action.SetSubject(subjectSelected);
 
         //we have to find it from the dictionary, because some types are trimmed (see ECALight -> Light)
@@ -503,6 +494,9 @@ public class ActionDropdownsManager
         }
 
 
+        verbDrop.style.display = DisplayStyle.Flex;
+        verbDrop.choices.Clear();
+
         verbsItem = RuleUtils.FindActiveVerbs(subjectSelected, subjects, subjectSelectedType, true);
         RuleUtils.FindPassiveVerbs(subjectSelected, subjects, subjectSelectedType, ref verbsItem);
 
@@ -514,7 +508,6 @@ public class ActionDropdownsManager
         string actionVerbValue = "<no-value>";
         if (actionVerb != null)
         {
-            actionVerb = actionVerb.Split(' ').First();
             actionVerbValue = verbsString.ContainsKey(actionVerb) ? actionVerb : "<no-value>";
         }
 
@@ -528,8 +521,8 @@ public class ActionDropdownsManager
         entries.Sort();
         verbDrop.choices = entries;
         verbDrop.value = actionVerbValue;
-        //if (actionVerbValue != "<no-value>")
-        //    DropdownValueChangedVerb(verbDrop, action);
+        if (actionVerbValue != "<no-value>")
+            DropdownValueChangedVerb(verbDrop, action);
     }
     void DropdownValueChangedVerb(DropdownField verbDrop, Action action)
     {
@@ -538,30 +531,25 @@ public class ActionDropdownsManager
         verbSelectedString = verbDrop.value;
         int verbSelectedIndex = verbDrop.index;
 
-        DisableNextComponent("verb", action);
-
-        string actionObjVerb = action.GetActionMethod();
-        string actionObjVerbValue = "<no-value>";
-        if (actionObjVerb != null)
-        {
-            actionObjVerb = actionObjVerb.Split(' ').Length > 1 ? actionObjVerb.Split(' ')[1] : "<no-value>";
-            actionObjVerbValue = verbsString.ContainsKey(actionObjVerb) ? actionObjVerbValue : "<no-value>";
-        }
-
-        string actionObj = action.GetActionMethod();
-        string actionObjValue = "<no-value>";
-        if (actionObj != null)
-        {
-            actionObj = actionObj.Split(' ').Length > 1 ? actionObj.Split(' ')[1] : "<no-value>";
-            actionObjValue = verbsString.ContainsKey(actionObj) ? actionObjValue : "<no-value>";
-        }
-
-
         if (verbSelectedString == "<no-value>")
         {
+            DisableNextComponent("verb", action);
             action.SetActionMethod(null);
             return;
         }
+
+
+        object actionObjVerb = action.GetObject();
+        string actionObjVerbValue = "<no-value>";
+        if (actionObjVerb != null)
+            actionObjVerbValue = (string)actionObjVerb;
+
+        object actionObj = action.GetObject();
+        string actionObjValue = "<no-value>";
+
+        if(action.GetActionMethod() != null && action.GetActionMethod() != "" && verbSelectedString != action.GetActionMethod())
+            DisableNextComponent("verb", action);
+
         action.SetActionMethod(verbSelectedString);
 
         //now, I need to know if the object would be a GameObject or a value 
@@ -576,7 +564,6 @@ public class ActionDropdownsManager
             ActionAttribute ac = actionAttributes[0];
             if (ac.ObjectType != null)
             {
-                //Debug.Log(ac.ObjectType.Name);
                 VerbSelectedType = ac.ObjectType.Name;
 
                 switch (ac.ObjectType.Name)
@@ -601,6 +588,10 @@ public class ActionDropdownsManager
                                     type = RuleUtils.RemoveECAFromString(type);
                                     // objDrop.options.Add(new Dropdown.OptionData(type + " " + entry.Key.name));
                                     entries.Add(type + " " + entry.Key.name);
+                                    if((actionObj as GameObject) == entry.Key)
+                                    {
+                                        actionObjValue = type + " " + entry.Key.name;
+                                    }
                                 }
                             }
                         }
@@ -612,6 +603,7 @@ public class ActionDropdownsManager
                         entries.Add("<no-value>");
                         entries.Add("yes");
                         entries.Add("no");
+                        actionObjValue = (string)actionObj;
                         break;
                     case "TrueFalse":
                         objectDrop.style.display = DisplayStyle.Flex;
@@ -619,6 +611,7 @@ public class ActionDropdownsManager
                         entries.Add("<no-value>");
                         entries.Add("true");
                         entries.Add("false");
+                        actionObjValue = (string)actionObj;
                         break;
                     case "OnOff":
                         objectDrop.style.display = DisplayStyle.Flex;
@@ -626,12 +619,13 @@ public class ActionDropdownsManager
                         entries.Add("<no-value>");
                         entries.Add("on");
                         entries.Add("off");
+                        actionObjValue = (string)actionObj;
                         break;
                     case "Single": //Float
-                        ActivateInputField("decimal");
+                        ActivateInputField("decimal", actionObj);
                         break;
                     case "String":
-                        ActivateInputField("string");
+                        ActivateInputField("string", actionObj);
                         break;
                     case "Rotation":
                         objectVerbDrop.style.display = DisplayStyle.Flex;
@@ -640,10 +634,12 @@ public class ActionDropdownsManager
                         objectVerbDrop.choices.Add("x");
                         objectVerbDrop.choices.Add("y");
                         objectVerbDrop.choices.Add("z");
-                        objectVerbDrop.value = "<no-value>";
+                        objectVerbDrop.value = actionObjVerbValue;
+                        if (actionObjVerbValue != "<no-value>")
+                            DropdownValueChangedObjectValue(objectVerbDrop, action);
                         break;
                     case "Int32":
-                        ActivateInputField("integer");
+                        ActivateInputField("integer", actionObj);
                         break;
                     default:
                         //it can be a typeof(EcaComponent), but first we need to retrieve the component
@@ -658,21 +654,24 @@ public class ActionDropdownsManager
                         if (c == null)
                         {
                             if (subjects.Count == 0) subjects = RuleUtils.FindSubjects();
-                            RuleUtils.AddObjectPassiveVerbs(subjects, comp, objectDrop);
+                            RuleUtils.AddObjectPassiveVerbs(subjects, comp, objectDrop, actionObj);
 
                         }
                         else //the verb is not passive, the object component can be found in all ecaobject in the scene
                         {
-                            RuleUtils.AddObjectActiveVerbs(subjects, comp, objectDrop, subjectSelected);
+                            RuleUtils.AddObjectActiveVerbs(subjects, comp, objectDrop, subjectSelected, actionObj);
                         }
 
                         break;
                 }
 
-                entries.Sort();
-                objectDrop.choices = entries;
-                objectDrop.value = "<no-value>";
+                entries.ForEach(entry => objectDrop.choices.Add(entry));
+                objectDrop.choices.Sort();
+                objectDrop.value = actionObjValue;
+                if (actionObjValue != "<no-value>")
+                    DropdownValueChangedObject(objectDrop, action);
             }
+
             //value e.g. increases intensity
             else if (ac.ValueType != null)
             {
@@ -680,6 +679,9 @@ public class ActionDropdownsManager
                 objectVerbDrop.choices.Clear();
                 objectVerbDrop.choices.Add("<no-value>");
                 objectVerbDrop.choices.Add(ac.variableName);
+                objectVerbDrop.value = actionObjVerbValue;
+                if (actionObjVerbValue != "<no-value>")
+                    DropdownValueChangedObjectValue(objectVerbDrop, action);
             }
         }
         //in the else case, the sentence is composed only of two words (e.g. vehicle starts)
@@ -704,41 +706,66 @@ public class ActionDropdownsManager
             }
             entries.Sort();
             objectVerbDrop.choices = entries;
-            objectVerbDrop.value = "<no-value>";
+            objectVerbDrop.value = actionObjVerbValue;
+            if (actionObjVerbValue != "<no-value>")
+                DropdownValueChangedObjectValue(objectVerbDrop, action);
         }
     }
     void DropdownValueChangedObject(DropdownField objectDrop, Action action)
     {
         RuleEditorManager.SetErrorMessageVisibility(DisplayStyle.None);
-        DisableNextComponent("object", action);
         //retrieve selected string and gameobject
         var objSelectedString = objectDrop.value;
         if (objSelectedString == "<no-value>")
         {
+            DisableNextComponent("object", action);
             action.SetObject(null);
             return;
         }
 
         string selectedCutString = Regex.Match(objSelectedString, "[^ ]* (.*)").Groups[1].Value;
+
+
         //The object selected is a GameObject
         if (GameObject.Find(selectedCutString) != null)
         {
             previousSelectedObject = objectSelected;
             objectSelected = GameObject.Find(selectedCutString);
+            if (action.GetObject() != null && objectSelected != (action.GetObject() as GameObject))
+                DisableNextComponent("object", action);
             action.SetObject(objectSelected);
         }
-        else objectSelected = null;
+        else
+        {
+            objectSelected = null;
+            DisableNextComponent("object", action);
+            action.SetObject(null);
+        }
     }
     void DropdownValueChangedObjectValue(DropdownField objectVerbDrop, Action action)
     {
         RuleEditorManager.SetErrorMessageVisibility(DisplayStyle.None);
-        DisableNextComponent("object", action);
         //retrieve selected string and gameobject
         var objSelectedString = objectVerbDrop.value;
-        if (objSelectedString == "<no-value>") return;
+        if (objSelectedString == "<no-value>")
+        {
+            DisableNextComponent("object", action);
+            return;
+        }
         objectSelected = null;
 
-        action.SetActionMethod($"{action.GetActionMethod()} {objSelectedString}");
+        object actionObjVerb = action.GetObject();
+        string actionObjVerbValue = "<no-value>";
+        if (actionObjVerb != null)
+            actionObjVerbValue = (string)actionObjVerb;
+
+        if (actionObjVerbValue == "<no-value>" || actionObjVerbValue != (string)action.GetObject())
+            DisableNextComponent("object", action);
+
+        action.SetObject(objSelectedString);
+
+        object actionValue = action.GetModifierValue();
+        string actionValueString = "<no-value>";
 
         prepDrop.style.display = DisplayStyle.Flex;
 
@@ -755,7 +782,7 @@ public class ActionDropdownsManager
 
             if (ac.ObjectType == typeof(Rotation))
             {
-                ActivateInputField("decimal");
+                ActivateInputField("decimal", action.GetModifierValue());
                 prepDrop.style.display = DisplayStyle.None;
                 objSelectedType = "Rotation";
                 return;
@@ -765,6 +792,7 @@ public class ActionDropdownsManager
             {
                 prepDrop.choices.Add(ac.ModifierString);
                 prepDrop.value = ac.ModifierString;
+                action.SetModifier(ac.ModifierString);
                 objSelectedType = ac.ValueType.Name;
 
                 switch (ac.ValueType.Name)
@@ -774,18 +802,21 @@ public class ActionDropdownsManager
                         entries.Add("<no-value>");
                         entries.Add("yes");
                         entries.Add("no");
+                        actionValueString = actionValue != null ? (actionValue as ECABoolean).ToString() : "<no-value>";
                         break;
                     case "TrueFalse":
                         valueDrop.style.display = DisplayStyle.Flex;
                         entries.Add("<no-value>");
                         entries.Add("true");
                         entries.Add("false");
+                        actionValueString = actionValue != null ? (actionValue as ECABoolean).ToString() : "<no-value>";
                         break;
                     case "OnOff":
                         valueDrop.style.display = DisplayStyle.Flex;
                         entries.Add("<no-value>");
                         entries.Add("on");
                         entries.Add("off");
+                        actionValueString = actionValue != null ? (actionValue as ECABoolean).ToString() : "<no-value>";
                         break;
                     case "String":
                         if (objSelectedString == "mesh")
@@ -794,8 +825,9 @@ public class ActionDropdownsManager
                             entries.Add("<no-value>");
                             foreach (var mesh in UIManager.items)
                                 entries.Add(mesh);
+                            actionValueString = actionValue != null ? (string)actionValue : "<no-value>";
                         }
-                        else ActivateInputField("alphanumeric");
+                        else ActivateInputField("alphanumeric", action.GetModifierValue());
                         break;
 
                     case "ECAColor":
@@ -803,16 +835,19 @@ public class ActionDropdownsManager
                         entries.Add("<no-value>");
                         // Add colors to dropdown
                         foreach (KeyValuePair<string, Color> kvp in colorDict)
+                        {
                             entries.Add(kvp.Key);
+                        }
+                        actionValueString = reversedColorDict[(Color)actionValue]; 
                         break;
 
                     case "Single":
                     case "Double":
-                        ActivateInputField("decimal");
+                        ActivateInputField("decimal", action.GetModifierValue());
                         break;
 
                     case "Int32":
-                        ActivateInputField("Integer");
+                        ActivateInputField("Integer", action.GetModifierValue());
                         break;
                     //TODO optimize
                     case "POV":
@@ -820,11 +855,12 @@ public class ActionDropdownsManager
                         entries.Add("<no-value>");
                         entries.Add("First");
                         entries.Add("Third");
+                        actionValueString = actionValue != null ? (string)actionValue : "<no-value>";
                         break;
                 }
                 entries.Sort();
                 valueDrop.choices = entries;
-                valueDrop.value = "<no-value>";
+                valueDrop.value = actionValueString;
                 return;
             }
         }
@@ -837,29 +873,65 @@ public class ActionDropdownsManager
     }
     void DropdownValueChangedInput(object inputDrop, Action action)
     {
+        Debug.Log($"objSelectedType: {objSelectedType}; inputDrop: {inputDrop}; inputDrop.GetType(): {inputDrop.GetType()};\n " +
+            $"action.GetModifierValue(): {action.GetModifierValue()}; action.GetModifierValueType(): {action.GetModifierValueType()}; ");
         RuleEditorManager.SetErrorMessageVisibility(DisplayStyle.None);
-        if ((inputDrop as string) == "<no-value>") action.SetModifierValue(null);
-        action.SetModifierValue(inputDrop);
+        if ((inputDrop as string) == "<no-value>")
+        {
+            action.SetModifierValue(null);
+            return;
+        }
+        
+        switch (objSelectedType)
+        {
+            case "YesNo":
+                action.SetModifierValue(new ECABoolean((string)inputDrop == "yes" ? ECABoolean.BoolType.YES : ECABoolean.BoolType.NO));
+                break;
+            case "TrueFalse":
+                action.SetModifierValue(new ECABoolean((string)inputDrop == "true" ? ECABoolean.BoolType.TRUE : ECABoolean.BoolType.FALSE));
+                break;
+            case "OnOff":
+                action.SetModifierValue(new ECABoolean((string)inputDrop == "on" ? ECABoolean.BoolType.ON : ECABoolean.BoolType.OFF));
+                break;
+            case "String":
+                action.SetModifierValue((string)inputDrop);
+                break;
+            case "ECAColor":
+                action.SetModifierValue(colorDict[(string)inputDrop]);
+                break;
+            case "Rotation":
+            case "Single":
+            case "Double":
+                action.SetModifierValue((float)inputDrop);
+                break;
+            case "Int32":
+                action.SetModifierValue((int)inputDrop);
+                break;
+            case "POV":
+                action.SetModifierValue((string)inputDrop);
+                break;
+        }
     }
 
-    void ActivateInputField(string validationType)
+    void ActivateInputField(string validationType, object actionObj)
     {
         switch (validationType)
         {
             case "decimal":
                 decimalField.style.display = DisplayStyle.Flex;
                 decimalField.Focus();
-                decimalField.value = 0;
+                decimalField.value = (actionObj != null) ? (float)actionObj : 0;
+
                 break;
             case "integer":
                 intField.style.display = DisplayStyle.Flex;
                 intField.Focus();
-                intField.value = 0;
+                intField.value = (actionObj != null) ? (int)actionObj : 0;
                 break;
             default:
                 textField.style.display = DisplayStyle.Flex;
                 textField.Focus();
-                textField.value = "";
+                textField.value = (actionObj != null) ? (string)actionObj : "";
                 break;
         }
     }
@@ -871,7 +943,7 @@ public class ActionDropdownsManager
             case "subject":
                 verbDrop.style.display = DisplayStyle.None;
                 objectVerbDrop.style.display = DisplayStyle.None;
-                //action.SetActionMethod(null);
+                action.SetActionMethod(null);
 
                 prefixThe.style.display = DisplayStyle.None;
                 prepDrop.style.display = DisplayStyle.None;
@@ -881,9 +953,9 @@ public class ActionDropdownsManager
                 intField.style.display = DisplayStyle.None;
                 decimalField.style.display = DisplayStyle.None;
                 inputDrop.style.display = DisplayStyle.None;
-                //action.SetObject(null);
-                //action.SetModifier(null);
-                //action.SetModifierValue(null);
+                action.SetObject(null);
+                action.SetModifier(null);
+                action.SetModifierValue(null);
                 break;
             // Change verb
             case "verb":
@@ -897,34 +969,22 @@ public class ActionDropdownsManager
                 intField.style.display = DisplayStyle.None;
                 decimalField.style.display = DisplayStyle.None;
                 inputDrop.style.display = DisplayStyle.None;
-                //action.SetObject(null);
-                //action.SetModifier(null);
-                //action.SetModifierValue(null);
+                action.SetObject(null);
+                action.SetModifier(null);
+                action.SetModifierValue(null);
                 break;
             // Change object
             case "object":
-                valueDrop.style.display = DisplayStyle.None;
                 valueDrop.choices.Clear();
-                //action.SetModifier(null);
-                //action.SetModifierValue(null);
+                valueDrop.style.display = DisplayStyle.None;
+                textField.style.display = DisplayStyle.None;
+                intField.style.display = DisplayStyle.None;
+                decimalField.style.display = DisplayStyle.None;
+                inputDrop.style.display = DisplayStyle.None;
+                action.SetModifier(null);
+                action.SetModifierValue(null);
                 break;
         }
-    }
-    GameObject GetGameObjectFromName(string name)
-    {
-        for (int i = 0; i < subjects.Count; i++)
-        {
-            foreach (KeyValuePair<GameObject, string> entry in subjects[i])
-            {
-                string type = RuleUtils.FindInnerTypeNotBehaviour(entry.Key);
-                type = RuleUtils.RemoveECAFromString(type);
-                if (name == entry.Key.name)
-                {
-                    return entry.Key;
-                }
-            }
-        }
-        return null;
     }
 }
 
