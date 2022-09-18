@@ -1,11 +1,15 @@
 using Antlr4.Runtime.Tree;
 using Codice.Client.BaseCommands;
+using EcaRules.Json;
 using ECARules4All.RuleEngine;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Net;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
+using Unity.VisualScripting.Antlr3.Runtime.Tree;
 using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
@@ -18,6 +22,7 @@ public class SequenceTreeView : NodesWindow
     public static readonly string ussNodeContainer = "node-container";
     public static readonly string ussNodeLabel = "node-label";
 
+    private readonly int m_RootId = 0;
     private int m_Id;
     private TreeView m_TreeView;
     private VisualElement m_RuleEditorContainer;
@@ -194,10 +199,6 @@ public class SequenceTreeView : NodesWindow
         m_TreeView.RefreshItems();
     }
 
-
-
-
-
     private DropdownMenuAction.Status UpdateActionMenuStatus(DropdownMenuAction arg)
     {
         if (m_TreeView.selectedItem == null) return DropdownMenuAction.Status.Disabled;
@@ -222,6 +223,50 @@ public class SequenceTreeView : NodesWindow
             var newItem = new TreeViewItemData<INode>(id, node);
             m_TreeView.AddItem(newItem, parentId: selection.id, rebuildTree: true);
             m_TreeView.ExpandItem(selection.id);
+        }
+    }
+
+    private void SaveSequenceTreeAsJson()
+    {
+        Debug.Log("Saving Sequence Tree...");
+        var root = m_TreeView.GetItemDataForId<INode>(m_RootId);
+
+        JsonEcaTree jsonSequenceTree = ParseJsonTree(root);
+
+        string jsonTree = JsonUtility.ToJson(jsonSequenceTree, true);
+
+        Debug.Log($"Sequence Tree Generated!\n{jsonTree}");
+
+    }
+    private JsonEcaTree ParseJsonTree(INode root)
+    {
+        var jsonTree = new JsonEcaTree();
+        
+        jsonTree.Tree = new JsonEcaNode(JsonEcaNode.StringToNodeType(root.Name));
+        DFS(root, jsonTree.Tree);
+
+        return jsonTree;
+    }
+    private void DFS(INode node, JsonEcaNode tree)
+    {
+        if (node.IsLeaf())
+        {
+            tree.Rules = new JsonEcaRule[] { JsonEcaRule.ParseRuleToJsonRule((node as Leaf).Rule) };
+            return;
+        }
+        foreach(int id in (node as Internal).childrenIds)
+        {
+            var child = m_TreeView.GetItemDataForId<INode>(id);
+            
+            if (child.IsLeaf() && (child as Leaf).Rule == null) 
+                continue;
+            //TODO: Instead of checking if it has children, check if there is at least one Rule inside the subtree having child as root.
+            if (!child.IsLeaf() && (child as Internal).childrenIds.Count == 0) 
+                continue;
+
+            var newNode = new JsonEcaNode(JsonEcaNode.StringToNodeType(child.Name));
+            DFS(child, newNode);
+            tree.Children.Add(newNode);
         }
     }
 

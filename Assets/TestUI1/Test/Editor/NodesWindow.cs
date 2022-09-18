@@ -43,6 +43,8 @@ public class NodesWindow : EditorWindow
             get;
             set;
         }
+
+        public bool IsLeaf();
     }
 
     protected class Leaf : INode
@@ -81,6 +83,11 @@ public class NodesWindow : EditorWindow
             this.Prefix = prefix;
             this.Rule = null;
         }
+
+        public bool IsLeaf()
+        {
+            return true;
+        }
     }
 
     protected class Internal : INode
@@ -112,6 +119,11 @@ public class NodesWindow : EditorWindow
             this.Id = id;
             this.Name = name;
             this.Prefix = prefix;
+        }
+
+        public bool IsLeaf()
+        {
+            return false;
         }
     }
 

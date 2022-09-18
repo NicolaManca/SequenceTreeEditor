@@ -1,21 +1,13 @@
 using ECARules4All;
 using ECARules4All.RuleEngine;
 using ECAScripts.Utils;
-using PlasticGui.Help.Conditions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
-using TMPro.EditorUtilities;
-using Unity.VisualScripting;
-using UnityEditor;
-using UnityEditor.IMGUI.Controls;
 using UnityEngine;
-using UnityEngine.UI;
 using UnityEngine.UIElements;
-using UnityEngine.XR.Interaction.Toolkit.Examples.UIRule.Prefabs;
 using static ECARules4All.RuleEngine.CompositeCondition;
-using static UnityEngine.EventSystems.EventTrigger;
 using Action = ECARules4All.RuleEngine.Action;
 using FloatField = UnityEngine.UIElements.FloatField;
 
@@ -128,7 +120,6 @@ public class CustomCondition
         return $"{op} {condition}";
     }
 }
-
 
 
 
@@ -317,8 +308,6 @@ public class RuleEditorManager
         return new Rule(eventAction, condition, actions);
     }
 }
-
-
 
 
 
@@ -1015,7 +1004,6 @@ public class ActionDropdownsManager
     }
 }
 
-
 public class ConditionDropdownsManager
 {
     #region Fields
@@ -1431,6 +1419,28 @@ public class ConditionDropdownsManager
         }
     }
 
+    void ActivateInputField(string validationType, object cCompareWith)
+    {
+        switch (validationType)
+        {
+            case "decimal":
+                decimalField.style.display = DisplayStyle.Flex;
+                decimalField.Focus();
+                decimalField.value = cCompareWith != null ? (float)cCompareWith : 0;
+                break;
+            case "integer":
+                intField.style.display = DisplayStyle.Flex;
+                intField.Focus();
+                intField.value = cCompareWith != null ? (int)cCompareWith : 0;
+                break;
+            default:
+                textField.style.display = DisplayStyle.Flex;
+                textField.Focus();
+                textField.value = cCompareWith != null ? (string)cCompareWith : "";
+                break;
+        }
+        compareWithDrop.style.display = DisplayStyle.None;
+    }
     void DisableNextComponent(string changedField, SimpleCondition condition)
     {
         switch (changedField)
@@ -1467,27 +1477,5 @@ public class ConditionDropdownsManager
                 condition.SetValueToCompare(null);
                 break;
         }
-    }
-    void ActivateInputField(string validationType, object cCompareWith)
-    {
-        switch (validationType)
-        {
-            case "decimal":
-                decimalField.style.display = DisplayStyle.Flex;
-                decimalField.Focus();
-                decimalField.value = cCompareWith != null ? (float)cCompareWith : 0;
-                break;
-            case "integer":
-                intField.style.display = DisplayStyle.Flex;
-                intField.Focus();
-                intField.value = cCompareWith != null ? (int)cCompareWith : 0;
-                break;
-            default:
-                textField.style.display = DisplayStyle.Flex;
-                textField.Focus();
-                textField.value = cCompareWith != null ? (string)cCompareWith : "";
-                break;
-        }
-        compareWithDrop.style.display = DisplayStyle.None;
     }
 }
