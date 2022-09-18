@@ -19,6 +19,7 @@ using Action = ECARules4All.RuleEngine.Action;
 
 public class SequenceTreeView : NodesWindow
 {
+    public static readonly string savedJsonFilePath = $"{Application.streamingAssetsPath}/Sequence Tree.txt";
     public static readonly string ussNodeContainer = "node-container";
     public static readonly string ussNodeLabel = "node-label";
 
@@ -235,7 +236,12 @@ public class SequenceTreeView : NodesWindow
 
         string jsonTree = JsonUtility.ToJson(jsonSequenceTree, true);
 
-        Debug.Log($"Sequence Tree Generated!\n{jsonTree}");
+        var uniqueFileName = AssetDatabase.GenerateUniqueAssetPath(savedJsonFilePath);
+
+
+        File.WriteAllText(uniqueFileName, jsonTree);
+        string fileName = uniqueFileName.Split("/").Last();
+        Debug.Log($"{fileName} Generated!");
 
     }
     private JsonEcaTree ParseJsonTree(INode root)
