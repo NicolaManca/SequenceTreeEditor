@@ -1,5 +1,4 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="True">
-    <Style src="project://database/Assets/TestUI1/Test/Editor/SequenceTreeView.uss?fileID=7433441132597879392&amp;guid=ffc9f48c1da3b8645979cb759602e9ab&amp;type=3#SequenceTreeView" />
     <SplitView orientation="Vertical" fixed-pane-initial-dimension="200" name="SplitView">
         <ui:VisualElement name="TreeViewContainer">
             <uie:Toolbar name="TreeViewToolbar" style="background-color: rgb(60, 60, 60);">
@@ -14,7 +13,7 @@
                 <uie:ToolbarButton tabindex="-1" text="Add Action" display-tooltip-when-elided="true" name="AddActionButton" style="-unity-text-align: middle-left; border-right-width: 0; -unity-font-style: normal;" />
                 <uie:ToolbarButton tabindex="-1" text="Add Condition" display-tooltip-when-elided="true" name="AddConditionButton" style="-unity-text-align: middle-left;" />
                 <uie:ToolbarSpacer name="Spacer" style="flex-grow: 1;" />
-                <ui:Label tabindex="-1" text="Error: Invalid Rule!" display-tooltip-when-elided="true" name="ErrorMessage" style="-unity-text-align: middle-left; padding-right: 10px; color: rgb(217, 33, 33); display: none;" />
+                <ui:Label tabindex="-1" text="Error: Invalid Rule!" display-tooltip-when-elided="true" name="ErrorMessage" style="-unity-text-align: middle-left; padding-right: 10px; color: rgb(219, 32, 32); display: flex; -unity-font-style: bold-and-italic;" />
                 <uie:ToolbarButton tabindex="-1" text="Discard Rule" name="DiscardButton" style="-unity-text-align: middle-left;" />
                 <uie:ToolbarButton tabindex="-1" text="Save Rule" name="SaveButton" style="border-right-width: 1px; border-left-width: 0; -unity-text-align: middle-left;" />
             </uie:Toolbar>

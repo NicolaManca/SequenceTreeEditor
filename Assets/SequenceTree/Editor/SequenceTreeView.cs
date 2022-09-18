@@ -6,14 +6,9 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Net;
-using System.Runtime.CompilerServices;
-using System.Text.RegularExpressions;
-using Unity.VisualScripting.Antlr3.Runtime.Tree;
 using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
-using UnityEngine.UI;
 using UnityEngine.UIElements;
 using Action = ECARules4All.RuleEngine.Action;
 
@@ -92,17 +87,6 @@ public class SequenceTreeView : NodesWindow
         m_RuleEditorContainer = rootVisualElement.Q<VisualElement>("RuleEditorContainer");
         m_RuleEditorContainer.SetEnabled(false);
         RuleEditorManager.SetupManager(m_RuleEditorContainer);
-
-
-
-
-
-
-        //Just to start with 2 Leaf nodes
-        m_TreeView.selectedIndex = 0;
-        AddNodeToSelection("leaf");
-        AddNodeToSelection("leaf");
-
     }
 
 
@@ -128,22 +112,12 @@ public class SequenceTreeView : NodesWindow
         var parent = m_TreeView.GetItemDataForId<Internal>(selection.ParentId);
         //Consider only the siblings with higher Id since they are the only ones that need to be changed.
         var siblings = parent.childrenIds.FindAll(x => x > selection.Id);
-        //UpdatePrefixes(new Queue<int>(siblings));
         siblings.ForEach(x => { m_TreeView.GetItemDataForId<INode>(x).Prefix--; });
         m_TreeView.TryRemoveItem(selection.Id);
         parent.childrenIds.Remove(selection.Id);
 
     }
 
-    private void UpdatePrefixes(Queue<int> nodes)
-    {
-        while(nodes.Count() != 0)
-        {
-            var node = m_TreeView.GetItemDataForId<INode>(nodes.Dequeue());
-            node.Prefix--;
-        }
-
-    }
 
     private void UpdateNodeName(string newName, VisualElement container)
     {
@@ -277,60 +251,3 @@ public class SequenceTreeView : NodesWindow
     }
 
 }
-
-
-
-
-
-
-#region Context Menu
-/*
-//Add contextual menu only to the Internal Nodes.
-if (node.GetType() != typeof(Leaf))
-{
-    container.AddManipulator(new ContextualMenuManipulator(evt => { BuildContextualMenu(evt, container.label, node); }));
-}
-*/
-#endregion
-#region Button for each node
-/*
-public class TestElement : VisualElement
-{
-    public static readonly string ussNodeContainer = "node-container";
-    public static readonly string ussNodeLabel = "node-label";
-
-    public TestElement()
-    {
-        AddToClassList(ussNodeContainer);
-        var label = new Label();
-        label.AddToClassList(ussNodeLabel);
-        var button = new UnityEngine.UIElements.Button();
-        button.text = "Test";
-        Add(label);
-        Add(button);
-    }
-}
-
-
-
-
-
-m_TreeView.makeItem = () => new TestElement();
-
-        // Set TreeView.bindItem to bind an initialized node to a data item.
-        m_TreeView.bindItem = (VisualElement element, int index) =>
-        {
-
-            (element as TestElement).Q<Label>().text = m_TreeView.GetItemDataForIndex<INode>(index).Name;
-            var button = (element as TestElement).Q<UnityEngine.UIElements.Button>();
-            if(m_TreeView.GetItemDataForIndex<INode>(index).GetType() == typeof(Leaf))
-            {
-                button.visible = false;
-            }
-            else
-            {
-                button.clickable = new Clickable(TestButtonClick);
-            }
-        };
-*/
-#endregion
