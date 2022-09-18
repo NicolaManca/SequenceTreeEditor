@@ -11,6 +11,7 @@ using Unity.VisualScripting;
 using UnityEditor;
 using UnityEditor.IMGUI.Controls;
 using UnityEngine;
+using UnityEngine.UI;
 using UnityEngine.UIElements;
 using UnityEngine.XR.Interaction.Toolkit.Examples.UIRule.Prefabs;
 using static ECARules4All.RuleEngine.CompositeCondition;
@@ -21,7 +22,7 @@ using FloatField = UnityEngine.UIElements.FloatField;
 
 public class CustomCondition
 {
-    public ConditionType op;
+    public ConditionType op = ConditionType.AND;
     public SimpleCondition condition = new();
 
 
@@ -29,7 +30,7 @@ public class CustomCondition
     {
         //If there is only one condition, then is a SimpleCondition and can be easily parsed.
         if(condition.IsLeaf()) return new List<CustomCondition>() { 
-            new CustomCondition() { op = ConditionType.NONE, condition = condition as SimpleCondition} 
+            new CustomCondition() { op = ConditionType.NONE, condition = (condition as SimpleCondition).Clone() as SimpleCondition} 
         };
         
         List<CustomCondition> conditionsList = new();
@@ -88,7 +89,7 @@ public class CustomCondition
         if (condition.IsLeaf()) 
         {
             CustomCondition customCondition = new();
-            customCondition.condition = condition as SimpleCondition;
+            customCondition.condition = (condition as SimpleCondition).Clone() as SimpleCondition;
             customCondition.op = (condition.GetParent() as CompositeCondition).Op;
             conditionsList.Add(customCondition);
             return conditionsList;
@@ -109,6 +110,16 @@ public class CustomCondition
             "Or" => ConditionType.OR,
             "Not" => ConditionType.NOT,
             _ => ConditionType.NONE,
+        };
+    }
+    public static string ParseConditionTypeToString(ConditionType cType)
+    {
+        return cType switch
+        {
+            ConditionType.AND => "And",
+            ConditionType.OR => "Or",
+            ConditionType.NOT => "Not",
+            _ => null,
         };
     }
 
@@ -341,6 +352,7 @@ public class ActionDropdownsManager
     private string VerbSelectedType;
     private GameObject objectSelected;
     private string objSelectedType;
+    private string rotationAxis;
 
     public static Dictionary<string, Color> colorDict = new()
     {
@@ -349,7 +361,6 @@ public class ActionDropdownsManager
         {"red", Color.red}, // 0xff9467bd
         {"purple", Color.magenta}, // 0xff9467bd
         {"gray", Color.gray}, // 0xff7f7f7f
-        {"grey", Color.grey}, // 0xff7f7f7f
         {"yellow", Color.yellow}, // 0xffbcbd22
         {"cyan", Color.cyan}, // 0xff17becf
         {"white", Color.white}, // 0xffffffff
@@ -364,25 +375,20 @@ public class ActionDropdownsManager
         {"brown", "#8c564bff"},
         {"pink", "#e377c2ff"},
         {"gray", "#7f7f7fff"},
-        {"grey", "#7f7f7fff"},
         {"yellow", "#bcbd22ff"},
         {"cyan", "#bcbd22ff"},
         {"white", "#ffffffff"},
     };
     public static Dictionary<Color, string> reversedColorDict = new()
     {
-       // { UIColors.blue, "blue" }, // 0xff1f77b4,
-        {UIColors.orange, "orange"}, // 0xffff7f0e
-        {UIColors.green, "green"}, // 0xffd62728
-        {UIColors.red, "red"}, // 0xff9467bd
-        {UIColors.purple, "purple"}, // 0xff9467bd
-        {UIColors.brown, "brown"}, // 0xff8c564b
-        {UIColors.pink, "pink"}, // 0xffe377c2
-        {UIColors.gray, "gray"}, // 0xff7f7f7f
-        {UIColors.grey, "grey"}, // 0xff7f7f7f
-        {UIColors.yellow, "yellow"}, // 0xffbcbd22
-        {UIColors.cyan, "cyan"}, // 0xff17becf
-        {UIColors.white, "white"}, // 0xffffffff
+        {Color.blue, "blue" }, // 0xff1f77b4,
+        {Color.green, "green"}, // 0xffd62728
+        {Color.red, "red"}, // 0xff9467bd
+        {Color.magenta, "purple"}, // 0xff9467bd
+        {Color.gray, "gray"}, // 0xff7f7f7f
+        {Color.yellow, "yellow"}, // 0xffbcbd22
+        {Color.cyan, "cyan"}, // 0xff17becf
+        {Color.white, "white"}, // 0xffffffff
     };
     #endregion
 
@@ -534,11 +540,6 @@ public class ActionDropdownsManager
         }
 
 
-        object actionObjVerb = action.GetObject();
-        string actionObjVerbValue = "<no-value>";
-        if (actionObjVerb != null)
-            actionObjVerbValue = (string)actionObjVerb;
-
         object actionObj = action.GetObject();
         string actionObjValue = "<no-value>";
 
@@ -598,7 +599,8 @@ public class ActionDropdownsManager
                         entries.Add("<no-value>");
                         entries.Add("yes");
                         entries.Add("no");
-                        actionObjValue = (string)actionObj;
+                        if (actionObj != null)
+                            actionObjValue = (string)actionObj;
                         break;
                     case "TrueFalse":
                         objectDrop.style.display = DisplayStyle.Flex;
@@ -606,7 +608,8 @@ public class ActionDropdownsManager
                         entries.Add("<no-value>");
                         entries.Add("true");
                         entries.Add("false");
-                        actionObjValue = (string)actionObj;
+                        if (actionObj != null)
+                            actionObjValue = (string)actionObj;
                         break;
                     case "OnOff":
                         objectDrop.style.display = DisplayStyle.Flex;
@@ -614,7 +617,8 @@ public class ActionDropdownsManager
                         entries.Add("<no-value>");
                         entries.Add("on");
                         entries.Add("off");
-                        actionObjValue = (string)actionObj;
+                        if (actionObj != null)
+                            actionObjValue = (string)actionObj;
                         break;
                     case "Single": //Float
                         ActivateInputField("decimal", actionObj);
@@ -629,8 +633,15 @@ public class ActionDropdownsManager
                         objectVerbDrop.choices.Add("x");
                         objectVerbDrop.choices.Add("y");
                         objectVerbDrop.choices.Add("z");
-                        objectVerbDrop.value = actionObjVerbValue;
-                        if (actionObjVerbValue != "<no-value>")
+                        rotationAxis = "<no-value>";
+                        if(actionObj != null)
+                        {
+                            if ((actionObj as Rotation).x > 0) rotationAxis = "x";                                  
+                            else if ((actionObj as Rotation).y > 0) rotationAxis = "y";
+                            else if ((actionObj as Rotation).z > 0) rotationAxis = "z";
+                        }
+                        objectVerbDrop.value = rotationAxis;
+                        if (rotationAxis != "<no-value>")
                             DropdownValueChangedObjectValue(objectVerbDrop, action);
                         break;
                     case "Int32":
@@ -674,8 +685,10 @@ public class ActionDropdownsManager
                 objectVerbDrop.choices.Clear();
                 objectVerbDrop.choices.Add("<no-value>");
                 objectVerbDrop.choices.Add(ac.variableName);
-                objectVerbDrop.value = actionObjVerbValue;
-                if (actionObjVerbValue != "<no-value>")
+                if (actionObj != null)
+                    actionObjValue = (string)actionObj;
+                objectVerbDrop.value = actionObjValue;
+                if (actionObjValue != "<no-value>")
                     DropdownValueChangedObjectValue(objectVerbDrop, action);
             }
         }
@@ -701,8 +714,10 @@ public class ActionDropdownsManager
             }
             entries.Sort();
             objectVerbDrop.choices = entries;
-            objectVerbDrop.value = actionObjVerbValue;
-            if (actionObjVerbValue != "<no-value>")
+            if (actionObj != null)
+                actionObjValue = (string)actionObj;
+            objectVerbDrop.value = actionObjValue;
+            if (actionObjValue != "<no-value>")
                 DropdownValueChangedObjectValue(objectVerbDrop, action);
         }
     }
@@ -745,19 +760,23 @@ public class ActionDropdownsManager
         if (objSelectedString == "<no-value>")
         {
             DisableNextComponent("object", action);
+            if(objSelectedType == "Rotation") action.SetObject(null);
             return;
         }
         objectSelected = null;
 
-        object actionObjVerb = action.GetObject();
-        string actionObjVerbValue = "<no-value>";
-        if (actionObjVerb != null)
-            actionObjVerbValue = (string)actionObjVerb;
+        //object actionObjVerb = action.GetObject();
+        //string actionObjVerbValue = "<no-value>";
+        //if (actionObjVerb != null && actionObjVerb.GetType() != typeof(GameObject) && actionObjVerb.GetType() != typeof(Rotation))
+        //    actionObjVerbValue = (string)actionObjVerb;
 
-        if (actionObjVerbValue == "<no-value>" || actionObjVerbValue != (string)action.GetObject())
+        if (action.GetObjectType() == typeof(Rotation) && objSelectedString != rotationAxis)
+            DisableNextComponent("object", action);
+        else if (action.GetObjectType() == typeof(GameObject) && objSelectedString != (action.GetObject() as GameObject).name)
             DisableNextComponent("object", action);
 
-        action.SetObject(objSelectedString);
+        if(action.GetObjectType() == typeof(string))
+            action.SetObject(objSelectedString);
 
         object actionValue = action.GetModifierValue();
         string actionValueString = "<no-value>";
@@ -777,7 +796,11 @@ public class ActionDropdownsManager
 
             if (ac.ObjectType == typeof(Rotation))
             {
-                ActivateInputField("decimal", action.GetModifierValue());
+                rotationAxis = objSelectedString;
+                if (action.GetObjectType() != typeof(Rotation)) ActivateInputField("decimal", null);
+                else if (rotationAxis == "x") ActivateInputField("decimal", (action.GetObject() as Rotation).x);
+                else if (rotationAxis == "y") ActivateInputField("decimal", (action.GetObject() as Rotation).y);
+                else if (rotationAxis == "z") ActivateInputField("decimal", (action.GetObject() as Rotation).z);
                 prepDrop.style.display = DisplayStyle.None;
                 objSelectedType = "Rotation";
                 return;
@@ -870,13 +893,14 @@ public class ActionDropdownsManager
     {
         Debug.Log($"objSelectedType: {objSelectedType}; inputDrop: {inputDrop}; inputDrop.GetType(): {inputDrop.GetType()};\n " +
             $"action.GetModifierValue(): {action.GetModifierValue()}; action.GetModifierValueType(): {action.GetModifierValueType()}; ");
+
         RuleEditorManager.SetErrorMessageVisibility(DisplayStyle.None);
         if ((inputDrop as string) == "<no-value>")
         {
             action.SetModifierValue(null);
             return;
         }
-        
+
         switch (objSelectedType)
         {
             case "YesNo":
@@ -895,6 +919,14 @@ public class ActionDropdownsManager
                 action.SetModifierValue(colorDict[(string)inputDrop]);
                 break;
             case "Rotation":
+                float degreesValue = (float)inputDrop;
+                Rotation rot = new();
+                if (rotationAxis == "x") rot.x = degreesValue;
+                if (rotationAxis == "y") rot.y = degreesValue;
+                else if (rotationAxis == "z") rot.z = degreesValue;
+                Debug.Log($"value: {degreesValue}; rotationAxis: {rotationAxis}; rot: {rot}");
+                action.SetObject(rot);
+                break;
             case "Single":
             case "Double":
                 action.SetModifierValue((float)inputDrop);
@@ -1014,6 +1046,8 @@ public class ConditionDropdownsManager
     //selected symbol
     private string selectedSymbol;
 
+    private string rotatesAround;
+
     private static List<string> booleanSymbols = new List<string>() { "is", "is not" };
     private static List<string> matemathicalSymbols = new List<string>() { "=", "!=", ">", "<", "<=", ">=" };
 
@@ -1025,9 +1059,11 @@ public class ConditionDropdownsManager
     {
         var toCheckPart = conditionContainer.Q<VisualElement>("ToCheckC");
         toCheckDrop = toCheckPart.Q<DropdownField>("ToCheck");
+
+        var cAndOr = cCondition.op;
         andOrDrop = toCheckPart.Q<DropdownField>("AndOr");
         andOrDrop.choices = new List<string>() { "And", "Or", "Not" };
-        andOrDrop.SetValueWithoutNotify("And");
+        andOrDrop.value = CustomCondition.ParseConditionTypeToString(cAndOr);
 
         var propertyPart = conditionContainer.Q<VisualElement>("PropertyC");
         propertyDrop = propertyPart.Q<DropdownField>("Property");
@@ -1046,11 +1082,6 @@ public class ConditionDropdownsManager
         
         propertyDrop.RegisterValueChangedCallback(delegate { DropdownValueChangedProperty(propertyDrop, cCondition.condition); });
         checkSymbolDrop.RegisterValueChangedCallback(delegate { DropdownValueChangedCheckSymbol(checkSymbolDrop, cCondition.condition); });
-
-        //compareWithDrop.RegisterValueChangedCallback(delegate { cCondition.condition.SetValueToCompare(compareWithDrop.value); });
-        //textField.RegisterValueChangedCallback(delegate { cCondition.condition.SetValueToCompare(textField.value); });
-        //intField.RegisterValueChangedCallback(delegate { cCondition.condition.SetValueToCompare(intField.value); });
-        //decimalField.RegisterValueChangedCallback(delegate { cCondition.condition.SetValueToCompare(decimalField.value); });
         
         compareWithDrop.RegisterValueChangedCallback(delegate { DropdownValueChangedCompareValue(compareWithDrop.value, cCondition.condition); });
         textField.RegisterValueChangedCallback(delegate { DropdownValueChangedCompareValue(textField.value, cCondition.condition); });
@@ -1088,42 +1119,52 @@ public class ConditionDropdownsManager
         }
         entries.Sort();
         toCheckDrop.choices = entries;
-        int index = entries.IndexOf(conditionSubjectValue);
-        toCheckDrop.index = index;
+        toCheckDrop.value = conditionSubjectValue;
+        if (conditionSubjectValue != "<no-value>")
+            DropdownValueChangedToCheck(toCheckDrop, condition);
     }
     private void DropdownValueChangedToCheck(DropdownField toCheck, SimpleCondition condition)
     {
         RuleEditorManager.SetErrorMessageVisibility(DisplayStyle.None);
-        //if previous activated, hide next elements
-        DisableNextComponent("toCheck", condition);
+
+        string selectedSubjectString = toCheck.value;
+        if (selectedSubjectString == "<no-value>")
+        {
+            DisableNextComponent("toCheck", condition);
+            condition.SetSubject(null);
+            return;
+        }
 
         string conditionPropertyValue = "<no-value>";
         string conditionProperty = condition.GetProperty();
         if (conditionProperty != null && conditionProperty != "")
             conditionPropertyValue = conditionProperty;
-
-        //retrieve selected string and gameobject
-        string selectedSubjectString = toCheck.value;
-        if (selectedSubjectString == "<no-value>")
+        if(conditionProperty == "rotation" && condition.GetValueType() == typeof(Rotation))
         {
-            condition.SetSubject(null);
-            return;
+            Rotation rot = condition.GetValueToCompare() as Rotation;
+            if (rot.x > 0) conditionPropertyValue = "rotation x";
+            else if (rot.y > 0) conditionPropertyValue = "rotation y";
+            else if (rot.z > 0) conditionPropertyValue = "rotation z";
+            //rotatesAround = conditionPropertyValue;
         }
 
         //activate next element
-        propertyDrop.style.display = DisplayStyle.Flex;
-        propertyDrop.choices.Clear();
-
-
         //I need to cut the string because in the dropdown we use "Type Name", the dictionary only contains the type
         string selectedCutString = Regex.Match(selectedSubjectString, "[^ ]* (.*)").Groups[1].Value;
         toCheckSelectedType = Regex.Match(selectedSubjectString, "^[^ ]+").Value;
         previousToCheckSelected = toCheckSelected;
 
         toCheckSelected = GameObject.Find(selectedCutString).gameObject;
+
+        if (condition.GetSubject() != null && toCheckSelected != condition.GetSubject())
+            DisableNextComponent("toCheck", condition);
+
         condition.SetSubject(toCheckSelected);
 
         stateVariables = RuleUtils.FindStateVariables(toCheckSelected);
+        
+        propertyDrop.style.display = DisplayStyle.Flex;
+        propertyDrop.choices.Clear();
 
         // Used to sort each dropdown's options
         List<string> entries = new List<string>();
@@ -1141,35 +1182,50 @@ public class ConditionDropdownsManager
         entries.Sort();
         propertyDrop.choices = entries;
         propertyDrop.value = conditionPropertyValue;
+        if (conditionPropertyValue != "<no-value>")
+            DropdownValueChangedProperty(propertyDrop, condition);
     }
     private void DropdownValueChangedProperty(DropdownField property, SimpleCondition condition)
     {
         RuleEditorManager.SetErrorMessageVisibility(DisplayStyle.None);
-        //if previous activated, hide next elements
-        DisableNextComponent("property", condition);
 
         //retrieve selected string and type
         propertySelected = property.value;
         if (propertySelected == "<no-value>")
         {
+            //if previous activated, hide next elements
+            DisableNextComponent("property", condition);
             condition.SetProperty(null);
             return;
         }
 
-        //activate next element
-        checkSymbolDrop.style.display = DisplayStyle.Flex;
-        checkSymbolDrop.choices.Clear();
 
-        if (propertySelected.StartsWith("rotation ")) propertySelected = "rotation";
+        if (propertySelected.StartsWith("rotation "))
+        {
+            rotatesAround = propertySelected;
+            propertySelected = "rotation";
+        }
+
+        if (condition.GetProperty() != null && condition.GetProperty() != "" && propertySelected != condition.GetProperty())
+            DisableNextComponent("property", condition);
+
+        string conditionSymbol = condition.GetSymbol();
+        string conditionSymbolValue = "<no-value>";
+        if(conditionSymbol != null && conditionSymbol != "")
+            conditionSymbolValue = conditionSymbol; 
+
         condition.SetProperty(propertySelected);
 
         //thanks to the dictionary, we can retrieve the type:
         ECARules4AllType type = stateVariables[propertySelected].Item1;
 
 
+        //activate next element
+        checkSymbolDrop.style.display = DisplayStyle.Flex;
+        checkSymbolDrop.choices.Clear();
+
         // Used to sort each dropdown's options
         List<string> entries = new List<string>();
-        entries.Add("<no-value>");
         switch (type)
         {
             case ECARules4AllType.Float:
@@ -1195,8 +1251,11 @@ public class ConditionDropdownsManager
                 break;
         }
         entries.Sort();
-        checkSymbolDrop.choices = entries;
-        checkSymbolDrop.value = "<no-value>";
+        checkSymbolDrop.choices.Add("<no-value>");
+        entries.ForEach(entry => checkSymbolDrop.choices.Add(entry));
+        checkSymbolDrop.value = conditionSymbolValue;
+        if (conditionSymbolValue != "<no-value>")
+            DropdownValueChangedCheckSymbol(checkSymbolDrop, condition);
     }
     private void DropdownValueChangedCheckSymbol(DropdownField checkSymbol, SimpleCondition condition)
     {
@@ -1205,10 +1264,19 @@ public class ConditionDropdownsManager
         selectedSymbol = checkSymbol.value;
         if (selectedSymbol == "<no-value>") 
         {
+            DisableNextComponent("checkSymbol", condition);
             condition.SetSymbol(null);
             return; 
         }
+
+        string prevCheckSymbol = condition.GetSymbol();
+        if (prevCheckSymbol != null && prevCheckSymbol != "" && prevCheckSymbol != selectedSymbol)
+            DisableNextComponent("checkSymbol", condition);
+
         condition.SetSymbol(selectedSymbol);
+
+        object cCompareWith = condition.GetValueToCompare();
+        string cCompareWithValue = "<no-value>";
 
         ECARules4AllType type = stateVariables[propertySelected].Item1;
         compareWithType = type;
@@ -1225,7 +1293,10 @@ public class ConditionDropdownsManager
                 // Add colors to dropdown
                 foreach (KeyValuePair<string, Color> kvp in ActionDropdownsManager.colorDict)
                     entries.Add(kvp.Key);
-                compareWithDrop.value = "<no-value>";
+
+                if(cCompareWith != null)
+                    cCompareWithValue = ActionDropdownsManager.reversedColorDict[(Color)cCompareWith];
+
                 //if previous activated, hide the input fields
                 textField.style.display = DisplayStyle.None;
                 intField.style.display = DisplayStyle.None;
@@ -1236,7 +1307,7 @@ public class ConditionDropdownsManager
                 compareWithDrop.choices.Clear();
                 compareWithDrop.style.display = DisplayStyle.Flex;
                 entries.Add("<no-value>");
-                compareWithDrop.value = "<no-value>";
+
                 //if previous activated, hide the input fields
                 textField.style.display = DisplayStyle.None;
                 intField.style.display = DisplayStyle.None;
@@ -1246,18 +1317,22 @@ public class ConditionDropdownsManager
                 compareWithDrop.choices.Clear();
                 compareWithDrop.style.display = DisplayStyle.Flex;
                 entries.Add("<no-value>");
-                //TODO togliere questo schifo
+                //TODO togliere questo schifo (Copiato da ConditionDropdownHandler)
                 if (toCheckSelectedType == "ECALight" || toCheckSelectedType == "Light")
                 {
                     entries.Add("on");
                     entries.Add("off");
+                    if(cCompareWith != null)
+                        cCompareWithValue = (cCompareWith as ECABoolean).GetBoolType() == ECABoolean.BoolType.ON ? "on" : "off";
                 }
                 else
                 {
                     entries.Add("true");
                     entries.Add("false");
+                    if(cCompareWith != null)
+                        cCompareWithValue = (cCompareWith as ECABoolean).GetBoolType() == ECABoolean.BoolType.TRUE ? "true" : "false";
                 }
-                compareWithDrop.value = "<no-value>";
+
                 //if previous activated, hide the input fields
                 textField.style.display = DisplayStyle.None;
                 intField.style.display = DisplayStyle.None;
@@ -1266,13 +1341,13 @@ public class ConditionDropdownsManager
             case ECARules4AllType.Float:
             case ECARules4AllType.Time:
             case ECARules4AllType.Rotation:
-                ActivateInputField("decimal");
+                ActivateInputField("decimal", cCompareWith);
                 break;
             case ECARules4AllType.Integer:
-                ActivateInputField("integer");
+                ActivateInputField("integer", cCompareWith);
                 break;
             case ECARules4AllType.Text:
-                ActivateInputField("alphanumeric");
+                ActivateInputField("alphanumeric", cCompareWith);
                 break;
 
             case ECARules4AllType.Identifier:
@@ -1284,7 +1359,9 @@ public class ConditionDropdownsManager
                     entries.Add("<no-value>");
                     entries.Add("First");
                     entries.Add("Third");
-                    compareWithDrop.value = "<no-value>";
+
+                    cCompareWithValue = (string)cCompareWith;
+
                     //if previous activated, hide the input fields
                     textField.style.display = DisplayStyle.None;
                     intField.style.display = DisplayStyle.None;
@@ -1295,12 +1372,12 @@ public class ConditionDropdownsManager
         }
         entries.Sort();
         compareWithDrop.choices = entries;
-        compareWithDrop.value = "no-value>";
+        compareWithDrop.value = cCompareWithValue;
     }
     private void DropdownValueChangedCompareValue(object value, SimpleCondition condition)
     {
         RuleEditorManager.SetErrorMessageVisibility(DisplayStyle.None);
-        if ((value as string) == "<no-value>")
+        if ((string)value == "<no-value>")
         {
             condition.SetValueToCompare(null);
             return;
@@ -1316,14 +1393,29 @@ public class ConditionDropdownsManager
             case ECARules4AllType.Boolean:
                 //Copied from DropdownValueChangedCheckSymbol.
                 if (toCheckSelectedType == "ECALight" || toCheckSelectedType == "Light")
-                    condition.SetValueToCompare((value as string) == "on");
+                    condition.SetValueToCompare(new ECABoolean((string)value == "on" ? ECABoolean.BoolType.ON : ECABoolean.BoolType.OFF));
                 else
-                    condition.SetValueToCompare((value as string) == "true");
+                    condition.SetValueToCompare(new ECABoolean((string)value == "true" ? ECABoolean.BoolType.TRUE : ECABoolean.BoolType.FALSE));
                 break;
             case ECARules4AllType.Float:
             case ECARules4AllType.Time:
-            case ECARules4AllType.Rotation:
                 condition.SetValueToCompare((float)value);
+                break;
+            case ECARules4AllType.Rotation:
+                Rotation rot = new Rotation();
+                switch (rotatesAround)
+                {
+                    case "rotation x":
+                        rot.x = (float)value;
+                        break;
+                    case "rotation y":
+                        rot.y = (float)value;
+                        break;
+                    case "rotation z":
+                        rot.z = (float)value;
+                        break;
+                }
+                condition.SetValueToCompare(rot);
                 break;
             case ECARules4AllType.Integer:
                 condition.SetValueToCompare((int)value);
@@ -1366,44 +1458,36 @@ public class ConditionDropdownsManager
                 decimalField.style.display = DisplayStyle.None;
                 condition.SetValueToCompare(null);
                 break;
+            // CheckSymbol
+            case "checkSymbol":
+                compareWithDrop.style.display = DisplayStyle.None;
+                textField.style.display = DisplayStyle.None;
+                intField.style.display = DisplayStyle.None;
+                decimalField.style.display = DisplayStyle.None;
+                condition.SetValueToCompare(null);
+                break;
         }
     }
-    void ActivateInputField(string validationType)
+    void ActivateInputField(string validationType, object cCompareWith)
     {
         switch (validationType)
         {
             case "decimal":
                 decimalField.style.display = DisplayStyle.Flex;
                 decimalField.Focus();
-                decimalField.value = 0;
+                decimalField.value = cCompareWith != null ? (float)cCompareWith : 0;
                 break;
             case "integer":
                 intField.style.display = DisplayStyle.Flex;
                 intField.Focus();
-                intField.value = 0;
+                intField.value = cCompareWith != null ? (int)cCompareWith : 0;
                 break;
             default:
                 textField.style.display = DisplayStyle.Flex;
                 textField.Focus();
-                textField.value = "";
+                textField.value = cCompareWith != null ? (string)cCompareWith : "";
                 break;
         }
         compareWithDrop.style.display = DisplayStyle.None;
-    }
-    GameObject GetGameObjectFromName(string name)
-    {
-        for (int i = 0; i < toCheckDictionary.Count; i++)
-        {
-            foreach (KeyValuePair<GameObject, string> entry in toCheckDictionary[i])
-            {
-                string type = RuleUtils.FindInnerTypeNotBehaviour(entry.Key);
-                type = RuleUtils.RemoveECAFromString(type);
-                if (name == entry.Key.name)
-                {
-                    return entry.Key;
-                }
-            }
-        }
-        return null;
     }
 }

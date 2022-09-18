@@ -96,6 +96,10 @@ namespace ECARules4All
             this.y = r.eulerAngles.y;
             this.z = r.eulerAngles.z;
         }
+        public override string ToString()
+        {
+            return $"(x: {x}, y: {y}, z: {z})";
+        }
     }
 
     public class Path

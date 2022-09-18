@@ -495,9 +495,9 @@ namespace ECARules4All.RuleEngine
             var clonedAction = new List<Action>();
             actions.ForEach(action => clonedAction.Add(new Action(
                 action.GetSubject(),
-                action.GetActionMethod() != null ? string.Copy(Event.GetActionMethod()) : null,
+                action.GetActionMethod() != null ? string.Copy(action.GetActionMethod()) : null,
                 action.GetObject(),
-                action.GetModifier() != null ? string.Copy(Event.GetModifier()) : null,
+                action.GetModifier() != null ? string.Copy(action.GetModifier()) : null,
                 action.GetModifierValue()
                 )));
             clone = new Rule(eventAction, conditions, clonedAction);
@@ -686,7 +686,7 @@ namespace ECARules4All.RuleEngine
     ///<summary>
     ///<c>SimpleCondition</c> defines a simple condition to be checked, this is a subclass of <seealso cref="Condition"/> node. 
     ///</summary>
-    public class SimpleCondition : Condition
+    public class SimpleCondition : Condition, ICloneable
     {
         private GameObject toCheck;
         private string property;
@@ -902,6 +902,17 @@ namespace ECARules4All.RuleEngine
         public override string ToString()
         {
             return toCheck + " " + property + " " + checkSymbol + " " + compareWith;
+        }
+
+        public object Clone()
+        {
+            SimpleCondition clone = new (
+                toCheck,
+                property != null ? string.Copy(property) : null,
+                checkSymbol != null ? string.Copy(checkSymbol) : null,
+                compareWith
+            );
+            return clone;
         }
     }
 
@@ -1172,7 +1183,7 @@ namespace ECARules4All.RuleEngine
         {
             if (a_subject == null) return null;
             var actionString = $"{a_subject.name} {a_verb}";
-            actionString += a_object == null ? "" : $" {a_object}";
+            actionString += a_object == null ? "" : (a_object.GetType() == typeof(GameObject)) ? $" {(a_object as GameObject).name}" : $" {a_object}";
             actionString += a_modifier == null ? "" : $" {a_modifier}";
             actionString += a_value == null ? "": $" {a_value}";
             return actionString;

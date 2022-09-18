@@ -4,6 +4,8 @@
         <ui:VisualElement name="TreeViewContainer">
             <uie:Toolbar name="TreeViewToolbar" style="background-color: rgb(60, 60, 60);">
                 <uie:ToolbarMenu tabindex="-1" display-tooltip-when-elided="false" text="Add Node" name="AddNodeMenu" />
+                <uie:ToolbarSpacer name="Spacer" style="flex-grow: 1;" />
+                <uie:ToolbarButton tabindex="-1" text="Save Sequence Tree" display-tooltip-when-elided="true" name="SaveTreeButton" style="-unity-text-align: middle-left;" />
             </uie:Toolbar>
             <ui:TreeView fixed-item-height="20" name="TreeView" style="background-color: rgb(48, 48, 48); flex-grow: 1;" />
         </ui:VisualElement>

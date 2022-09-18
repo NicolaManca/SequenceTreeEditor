@@ -36,10 +36,13 @@ public class SequenceTreeView : NodesWindow
         uxml.CloneTree(rootVisualElement);
 
         //Setup TreeView Toolbar Menu
-        var treeTbMenu = rootVisualElement.Q<ToolbarMenu>("AddNodeMenu");
+        var treeViewToolbar = rootVisualElement.Q<Toolbar>("TreeViewToolbar"); 
+        var treeTbMenu = treeViewToolbar.Q<ToolbarMenu>("AddNodeMenu");
         treeTbMenu.menu.AppendAction("Add Sequence Node", a => { AddNodeToSelection("sequence"); }, UpdateActionMenuStatus);
         treeTbMenu.menu.AppendAction("Add Parallel Node", a => { AddNodeToSelection("parallel"); }, UpdateActionMenuStatus);
         treeTbMenu.menu.AppendAction("Add Leaf Node", a => { AddNodeToSelection("leaf"); }, UpdateActionMenuStatus);
+        var saveTreeBtn = treeViewToolbar.Q<ToolbarButton>("SaveTreeButton");
+        saveTreeBtn.clickable = new Clickable(() => SaveSequenceTreeAsJson());
 
         m_TreeView = rootVisualElement.Q<TreeView>();
 
@@ -84,18 +87,17 @@ public class SequenceTreeView : NodesWindow
         m_RuleEditorContainer.SetEnabled(false);
         RuleEditorManager.SetupManager(m_RuleEditorContainer);
 
+
+
+
+
+
         //Just to start with 2 Leaf nodes
         m_TreeView.selectedIndex = 0;
         AddNodeToSelection("leaf");
         AddNodeToSelection("leaf");
-;
 
     }
-
-
-
-
-
 
 
 
@@ -116,8 +118,7 @@ public class SequenceTreeView : NodesWindow
 
     private void DeleteItemNode(KeyDownEvent evt)
     {
-        var selection = m_TreeView.selectedItem as INode;
-        if (selection.Id == 0) return;
+        if (m_TreeView.selectedItem is not INode selection || selection.Id == 0) return;
         var parent = m_TreeView.GetItemDataForId<Internal>(selection.ParentId);
         //Consider only the siblings with higher Id since they are the only ones that need to be changed.
         var siblings = parent.childrenIds.FindAll(x => x > selection.Id);
@@ -145,7 +146,6 @@ public class SequenceTreeView : NodesWindow
         m_TreeView.RefreshItems();
     }
 
-
     private void UpdateRuleEditorStatus(IEnumerable<object> obj)
     {
         if (m_TreeView.selectedIndex == m_PrevSelectedNode) return;
@@ -163,7 +163,6 @@ public class SequenceTreeView : NodesWindow
 
 
         var rule = (selection as Leaf).Rule;
-        Debug.Log(rule);
         if (rule != null) rule = rule.Clone() as Rule;
         RuleEditorManager ruleEditorManager = new(rule);
 
