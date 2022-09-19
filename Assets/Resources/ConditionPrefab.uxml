@@ -1,5 +1,5 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
-    <Style src="project://database/Assets/TestUI1/Test/Editor/SequenceTreeView.uss?fileID=7433441132597879392&amp;guid=ffc9f48c1da3b8645979cb759602e9ab&amp;type=3#SequenceTreeView" />
+    <Style src="project://database/Assets/SequenceTree/Editor/SequenceTreeView.uss?fileID=7433441132597879392&amp;guid=ffc9f48c1da3b8645979cb759602e9ab&amp;type=3#SequenceTreeView" />
     <ui:VisualElement name="Condition" style="flex-direction: row; max-height: 50px; min-height: 50px;">
         <ui:VisualElement name="ToCheckC" style="flex-direction: row;">
             <ui:DropdownField index="-1" name="AndOr" style="max-width: 70px; min-width: 70px; margin-top: 7px; margin-bottom: 7px; display: none; margin-right: 0;" />
@@ -12,9 +12,9 @@
         </ui:VisualElement>
         <ui:VisualElement name="CompareWithC" style="flex-direction: row;">
             <ui:DropdownField index="-1" choices="System.Collections.Generic.List`1[System.String]" name="CompareWith" style="margin-top: 7px; margin-bottom: 7px; max-width: 200px; min-width: 100px; display: none;" />
-            <ui:TextField picking-mode="Ignore" text="Enter Text" name="TextInput" class="input-field" style="max-width: 200px; min-width: 100px; margin-top: 7px; margin-bottom: 7px; display: none;" />
-            <ui:IntegerField value="0" name="IntInput" class="input-field" style="max-width: 200px; min-width: 100px; margin-top: 7px; margin-bottom: 7px; display: none;" />
-            <ui:FloatField value="0" name="DecimalInput" class="input-field" style="margin-top: 7px; margin-bottom: 7px; max-width: 200px; min-width: 100px; display: none;" />
+            <ui:TextField picking-mode="Ignore" text="Enter Text" name="TextInput" is-delayed="true" class="input-field" style="max-width: 200px; min-width: 100px; margin-top: 7px; margin-bottom: 7px; display: none;" />
+            <ui:IntegerField value="0" name="IntInput" is-delayed="true" class="input-field" style="max-width: 200px; min-width: 100px; margin-top: 7px; margin-bottom: 7px; display: none;" />
+            <ui:FloatField value="0" name="DecimalInput" is-delayed="true" class="input-field" style="margin-top: 7px; margin-bottom: 7px; max-width: 200px; min-width: 100px; display: none;" />
         </ui:VisualElement>
         <ui:VisualElement name="Spacing" style="flex-grow: 1;" />
         <ui:VisualElement name="RemoveButton" style="max-width: 50px; min-width: 50px; justify-content: center;">

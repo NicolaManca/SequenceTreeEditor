@@ -260,7 +260,7 @@ public class RuleEditorManager
             SetConditionsSectionVisibility(DisplayStyle.None);
     }
 
-    private void SetConditionsSectionVisibility(DisplayStyle displayStyle)
+    public void SetConditionsSectionVisibility(DisplayStyle displayStyle)
     {
         conditionHeader.style.display = displayStyle;
         ConditionsContainer.style.display = displayStyle;
@@ -623,7 +623,7 @@ public class ActionDropdownsManager
                         objectVerbDrop.choices.Add("y");
                         objectVerbDrop.choices.Add("z");
                         rotationAxis = "<no-value>";
-                        if(actionObj != null)
+                        if(actionObj != null && action.GetObjectType() == typeof(Rotation))
                         {
                             if ((actionObj as Rotation).x > 0) rotationAxis = "x";                                  
                             else if ((actionObj as Rotation).y > 0) rotationAxis = "y";
@@ -674,7 +674,7 @@ public class ActionDropdownsManager
                 objectVerbDrop.choices.Clear();
                 objectVerbDrop.choices.Add("<no-value>");
                 objectVerbDrop.choices.Add(ac.variableName);
-                if (actionObj != null)
+                if (actionObj != null && action.GetObjectType() == typeof(string))
                     actionObjValue = (string)actionObj;
                 objectVerbDrop.value = actionObjValue;
                 if (actionObjValue != "<no-value>")
@@ -703,7 +703,7 @@ public class ActionDropdownsManager
             }
             entries.Sort();
             objectVerbDrop.choices = entries;
-            if (actionObj != null)
+            if (actionObj != null && action.GetObjectType() == typeof(string))
                 actionObjValue = (string)actionObj;
             objectVerbDrop.value = actionObjValue;
             if (actionObjValue != "<no-value>")
@@ -764,7 +764,7 @@ public class ActionDropdownsManager
         else if (action.GetObjectType() == typeof(GameObject) && objSelectedString != (action.GetObject() as GameObject).name)
             DisableNextComponent("object", action);
 
-        if(action.GetObjectType() == typeof(string))
+        if(action.GetObjectType() == null || action.GetObjectType() == typeof(string))
             action.SetObject(objSelectedString);
 
         object actionValue = action.GetModifierValue();
@@ -880,9 +880,8 @@ public class ActionDropdownsManager
     }
     void DropdownValueChangedInput(object inputDrop, Action action)
     {
-        Debug.Log($"objSelectedType: {objSelectedType}; inputDrop: {inputDrop}; inputDrop.GetType(): {inputDrop.GetType()};\n " +
-            $"action.GetModifierValue(): {action.GetModifierValue()}; action.GetModifierValueType(): {action.GetModifierValueType()}; ");
-
+        //Debug.Log($"objSelectedType: {objSelectedType}; inputDrop: {inputDrop}; inputDrop.GetType(): {inputDrop.GetType()};\n " +
+        //    $"action.GetModifierValue(): {action.GetModifierValue()}; action.GetModifierValueType(): {action.GetModifierValueType()}; ");
         RuleEditorManager.SetErrorMessageVisibility(DisplayStyle.None);
         if ((inputDrop as string) == "<no-value>")
         {
@@ -893,7 +892,7 @@ public class ActionDropdownsManager
         switch (objSelectedType)
         {
             case "YesNo":
-                action.SetModifierValue(new ECABoolean((string)inputDrop == "yes" ? ECABoolean.BoolType.YES : ECABoolean.BoolType.NO));
+                action.SetModifierValue(new ECABoolean((inputDrop as string) == "yes" ? ECABoolean.BoolType.YES : ECABoolean.BoolType.NO));
                 break;
             case "TrueFalse":
                 action.SetModifierValue(new ECABoolean((string)inputDrop == "true" ? ECABoolean.BoolType.TRUE : ECABoolean.BoolType.FALSE));
@@ -1365,7 +1364,7 @@ public class ConditionDropdownsManager
     private void DropdownValueChangedCompareValue(object value, SimpleCondition condition)
     {
         RuleEditorManager.SetErrorMessageVisibility(DisplayStyle.None);
-        if ((string)value == "<no-value>")
+        if ((value as string) == "<no-value>")
         {
             condition.SetValueToCompare(null);
             return;

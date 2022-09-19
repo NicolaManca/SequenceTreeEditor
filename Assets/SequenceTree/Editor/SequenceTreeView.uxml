@@ -32,10 +32,10 @@
                 </ui:VisualElement>
                 <ui:VisualElement name="RuleParts" style="flex-grow: 1; margin-left: 5px;">
                     <ui:VisualElement name="EventC" style="flex-grow: 1; max-height: 50px; min-height: 50px;" />
-                    <ui:VisualElement name="Conditions" style="flex-grow: 1; max-height: 150px; min-height: 150px; display: none;">
+                    <ui:VisualElement name="Conditions" style="flex-grow: 1; max-height: 150px; display: none;">
                         <ui:ScrollView name="ConditionsSV" style="flex-grow: 1;" />
                     </ui:VisualElement>
-                    <ui:VisualElement name="Actions" style="flex-grow: 1; min-height: 150px;">
+                    <ui:VisualElement name="Actions" style="flex-grow: 1;">
                         <ui:ScrollView name="ActionsSV" style="flex-grow: 1;" />
                     </ui:VisualElement>
                 </ui:VisualElement>

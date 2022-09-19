@@ -22,7 +22,7 @@ public class SequenceTreeView : NodesWindow
     private int m_Id;
     private TreeView m_TreeView;
     private VisualElement m_RuleEditorContainer;
-    private int m_PrevSelectedNode = -1;
+    private int m_PrevSelectedNodeId = -1;
 
 
     [MenuItem("Sequence/Sequence Tree")]
@@ -115,7 +115,7 @@ public class SequenceTreeView : NodesWindow
         siblings.ForEach(x => { m_TreeView.GetItemDataForId<INode>(x).Prefix--; });
         m_TreeView.TryRemoveItem(selection.Id);
         parent.childrenIds.Remove(selection.Id);
-
+        m_RuleEditorContainer.SetEnabled(false);
     }
 
 
@@ -128,23 +128,25 @@ public class SequenceTreeView : NodesWindow
 
     private void UpdateRuleEditorStatus(IEnumerable<object> obj)
     {
-        if (m_TreeView.selectedIndex == m_PrevSelectedNode) return;
-        var previousNode = m_TreeView.GetItemDataForIndex<INode>(m_PrevSelectedNode);
-        m_PrevSelectedNode = m_TreeView.selectedIndex;
         var selection = obj.First() as INode;
+
+        if (selection.Id == m_PrevSelectedNodeId) return;
+        m_PrevSelectedNodeId = m_TreeView.selectedIndex;
+
         if (selection.GetType() != typeof(Leaf))
         {
             m_RuleEditorContainer.SetEnabled(false);
             return;
         }
-        
+
 
         m_RuleEditorContainer.SetEnabled(true);
-
 
         var rule = (selection as Leaf).Rule;
         if (rule != null) rule = rule.Clone() as Rule;
         RuleEditorManager ruleEditorManager = new(rule);
+        ruleEditorManager.SetConditionsSectionVisibility(DisplayStyle.None);
+
 
         //Setup RuleEditor Toolbar Menu
         var addActionBtn = m_RuleEditorContainer.Q<ToolbarButton>("AddActionButton");
