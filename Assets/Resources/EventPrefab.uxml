@@ -1,4 +1,4 @@
-<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="True">
     <ui:VisualElement name="Event" style="flex-direction: row; min-height: 50px; max-height: 50px;">
         <ui:VisualElement name="SubjectC" style="flex-direction: row;">
             <ui:Label tabindex="-1" text="The" display-tooltip-when-elided="true" name="PrefixThe" style="-unity-font-style: bold; -unity-text-align: middle-center;" />
