@@ -12,7 +12,7 @@ using System.Diagnostics.CodeAnalysis;
 public class NodesWindow : EditorWindow
 {
     public static Dictionary<string, string> InternalNodeNames = new(){ 
-        { "parallel", "Parallel Execution" }, 
+        { "parallel", "Order Ind. Execution" }, 
         { "sequence", "Sequence Execution" }
     };
     

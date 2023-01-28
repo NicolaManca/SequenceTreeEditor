@@ -3,6 +3,7 @@ using Codice.Client.BaseCommands;
 using EcaRules.Json;
 using ECARules4All.RuleEngine;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -18,14 +19,14 @@ public class SequenceTreeView : NodesWindow
     public static readonly string ussNodeContainer = "node-container";
     public static readonly string ussNodeLabel = "node-label";
 
-    private readonly int m_RootId = 0;
-    private int m_Id;
-    private TreeView m_TreeView;
-    private VisualElement m_RuleEditorContainer;
-    private int m_PrevSelectedNodeId = -1;
+    readonly int _rootId = 0;
+    int _id;
+    TreeView _treeView;
+    VisualElement _ruleEditorContainer;
+    int _prevSelectedNodeId = -1;
+    Label _exportMessage;
 
-
-    [MenuItem("Sequence/Sequence Tree")]
+    [MenuItem("Sequence Tree/Sequence Tree Editor")]
     static void Summon()
     {
         GetWindow<SequenceTreeView>("Sequence Tree Editor");
@@ -33,25 +34,26 @@ public class SequenceTreeView : NodesWindow
 
     void CreateGUI()
     {
-        m_Id = 0;
+        _id = 0;
         uxml.CloneTree(rootVisualElement);
 
         //Setup TreeView Toolbar Menu
         var treeViewToolbar = rootVisualElement.Q<Toolbar>("TreeViewToolbar"); 
         var treeTbMenu = treeViewToolbar.Q<ToolbarMenu>("AddNodeMenu");
+        treeTbMenu.menu.AppendAction("Add Order Ind. Node", a => { AddNodeToSelection("parallel"); }, UpdateActionMenuStatus);
         treeTbMenu.menu.AppendAction("Add Sequence Node", a => { AddNodeToSelection("sequence"); }, UpdateActionMenuStatus);
-        treeTbMenu.menu.AppendAction("Add Parallel Node", a => { AddNodeToSelection("parallel"); }, UpdateActionMenuStatus);
         treeTbMenu.menu.AppendAction("Add Leaf Node", a => { AddNodeToSelection("leaf"); }, UpdateActionMenuStatus);
+        _exportMessage = treeViewToolbar.Q<Label>("OkMessage");
         var saveTreeBtn = treeViewToolbar.Q<ToolbarButton>("SaveTreeButton");
         saveTreeBtn.clickable = new Clickable(() => SaveSequenceTreeAsJson());
 
-        m_TreeView = rootVisualElement.Q<TreeView>();
+        _treeView = rootVisualElement.Q<TreeView>();
 
         // Call TreeView.SetRootItems() to populate the data in the tree.
-        m_TreeView.SetRootItems(TreeRoot);
+        _treeView.SetRootItems(TreeRoot);
 
         // Set TreeView.makeItem to initialize each node in the tree.
-        m_TreeView.makeItem = () =>
+        _treeView.makeItem = () =>
         {
             VisualElement container = new() { name = "container", focusable = true };
             container.AddToClassList(ussNodeContainer);
@@ -71,22 +73,22 @@ public class SequenceTreeView : NodesWindow
         };
 
         // Set TreeView.bindItem to bind an initialized node to a data item.
-        m_TreeView.bindItem = (VisualElement element, int index) =>
+        _treeView.bindItem = (VisualElement element, int index) =>
         {
             element.userData = index;
-            var node = m_TreeView.GetItemDataForIndex<INode>(index);
+            var node = _treeView.GetItemDataForIndex<INode>(index);
             string prefix = node.Prefix == 0 ? "R." : GetNodePrefix(node);
             element.Q<Label>("prefix").text = prefix;
             element.Q<Label>("nodeName").text = node.Name;
         };
 
 
-        m_TreeView.onSelectionChange += UpdateRuleEditorStatus;
-        m_TreeView.RegisterCallback<KeyDownEvent>(evt => { if (evt.keyCode == KeyCode.Delete) DeleteItemNode(evt); } );
+        _treeView.onSelectionChange += UpdateRuleEditorStatus;
+        _treeView.RegisterCallback<KeyDownEvent>(evt => { if (evt.keyCode == KeyCode.Delete) DeleteItemNode(evt); } );
 
-        m_RuleEditorContainer = rootVisualElement.Q<VisualElement>("RuleEditorContainer");
-        m_RuleEditorContainer.SetEnabled(false);
-        RuleEditorManager.SetupManager(m_RuleEditorContainer);
+        _ruleEditorContainer = rootVisualElement.Q<VisualElement>("RuleEditorContainer");
+        _ruleEditorContainer.SetEnabled(false);
+        RuleEditorManager.SetupManager(_ruleEditorContainer);
     }
 
 
@@ -94,13 +96,13 @@ public class SequenceTreeView : NodesWindow
     private string GetNodePrefix(INode node)
     {
         if (node.Prefix == 0) return "";
-        var parent = m_TreeView.GetItemDataForId<Internal>(node.ParentId);
+        var parent = _treeView.GetItemDataForId<Internal>(node.ParentId);
         return GetNodePrefix(parent) + $"{node.Prefix}.";
     }
 
     private void BuildContextualMenu(ContextualMenuPopulateEvent evt, VisualElement container)
     {
-        var node = m_TreeView.GetItemDataForIndex<INode>((int)container.userData);
+        var node = _treeView.GetItemDataForIndex<INode>((int)container.userData);
         if (node.GetType() == typeof(Leaf)) return;
         evt.menu.AppendAction(InternalNodeNames["sequence"], a => { UpdateNodeName(InternalNodeNames["sequence"], container); }, DropdownMenuAction.AlwaysEnabled);
         evt.menu.AppendAction(InternalNodeNames["parallel"], a => { UpdateNodeName(InternalNodeNames["parallel"], container); }, DropdownMenuAction.AlwaysEnabled);
@@ -108,39 +110,39 @@ public class SequenceTreeView : NodesWindow
 
     private void DeleteItemNode(KeyDownEvent evt)
     {
-        if (m_TreeView.selectedItem is not INode selection || selection.Id == 0) return;
-        var parent = m_TreeView.GetItemDataForId<Internal>(selection.ParentId);
+        if (_treeView.selectedItem is not INode selection || selection.Id == 0) return;
+        var parent = _treeView.GetItemDataForId<Internal>(selection.ParentId);
         //Consider only the siblings with higher Id since they are the only ones that need to be changed.
         var siblings = parent.childrenIds.FindAll(x => x > selection.Id);
-        siblings.ForEach(x => { m_TreeView.GetItemDataForId<INode>(x).Prefix--; });
-        m_TreeView.TryRemoveItem(selection.Id);
+        siblings.ForEach(x => { _treeView.GetItemDataForId<INode>(x).Prefix--; });
+        _treeView.TryRemoveItem(selection.Id);
         parent.childrenIds.Remove(selection.Id);
-        m_RuleEditorContainer.SetEnabled(false);
+        _ruleEditorContainer.SetEnabled(false);
     }
 
 
     private void UpdateNodeName(string newName, VisualElement container)
     {
-        var node = m_TreeView.GetItemDataForIndex<INode>((int)container.userData);
+        var node = _treeView.GetItemDataForIndex<INode>((int)container.userData);
         node.Name = newName;
-        m_TreeView.RefreshItems();
+        _treeView.RefreshItems();
     }
 
     private void UpdateRuleEditorStatus(IEnumerable<object> obj)
     {
         var selection = obj.First() as INode;
 
-        if (selection.Id == m_PrevSelectedNodeId) return;
-        m_PrevSelectedNodeId = m_TreeView.selectedIndex;
+        if (selection.Id == _prevSelectedNodeId) return;
+        _prevSelectedNodeId = _treeView.selectedIndex;
 
         if (selection.GetType() != typeof(Leaf))
         {
-            m_RuleEditorContainer.SetEnabled(false);
+            _ruleEditorContainer.SetEnabled(false);
             return;
         }
 
 
-        m_RuleEditorContainer.SetEnabled(true);
+        _ruleEditorContainer.SetEnabled(true);
 
         var rule = (selection as Leaf).Rule;
         if (rule != null) rule = rule.Clone() as Rule;
@@ -149,10 +151,10 @@ public class SequenceTreeView : NodesWindow
 
 
         //Setup RuleEditor Toolbar Menu
-        var addActionBtn = m_RuleEditorContainer.Q<ToolbarButton>("AddActionButton");
-        var addConditionBtn = m_RuleEditorContainer.Q<ToolbarButton>("AddConditionButton");
-        var discardBtn = m_RuleEditorContainer.Q<ToolbarButton>("DiscardButton");
-        var saveBtn = m_RuleEditorContainer.Q<ToolbarButton>("SaveButton");
+        var addActionBtn = _ruleEditorContainer.Q<ToolbarButton>("AddActionButton");
+        var addConditionBtn = _ruleEditorContainer.Q<ToolbarButton>("AddConditionButton");
+        var discardBtn = _ruleEditorContainer.Q<ToolbarButton>("DiscardButton");
+        var saveBtn = _ruleEditorContainer.Q<ToolbarButton>("SaveButton");
         addActionBtn.clickable = new Clickable(() => { ruleEditorManager.AddAction(new Action(), true); });
         addConditionBtn.clickable = new Clickable(() => { ruleEditorManager.AddCondition(new CustomCondition(), true); });
         discardBtn.clickable = new Clickable(() => { ruleEditorManager.DiscardRule(); });
@@ -173,23 +175,23 @@ public class SequenceTreeView : NodesWindow
 
         node.Rule = ruleG;
         node.Name = ruleG.ToString();
-        m_TreeView.RefreshItems();
+        _treeView.RefreshItems();
     }
 
     private DropdownMenuAction.Status UpdateActionMenuStatus(DropdownMenuAction arg)
     {
-        if (m_TreeView.selectedItem == null) return DropdownMenuAction.Status.Disabled;
-        if (m_TreeView.GetSelectedItems<INode>().First().data.GetType() == typeof(Leaf)) return DropdownMenuAction.Status.Disabled;
+        if (_treeView.selectedItem == null) return DropdownMenuAction.Status.Disabled;
+        if (_treeView.GetSelectedItems<INode>().First().data.GetType() == typeof(Leaf)) return DropdownMenuAction.Status.Disabled;
         return DropdownMenuAction.Status.Normal;
     }
 
     public void AddNodeToSelection(string nodeType)
     {
         INode node;
-        var selectionCollection = m_TreeView.GetSelectedItems<INode>();
+        var selectionCollection = _treeView.GetSelectedItems<INode>();
         if (selectionCollection.Count() > 0)
         {
-            int id = ++m_Id;
+            int id = ++_id;
             var selection = selectionCollection.First();
             int prefix = selection.children.Count() + 1;
 
@@ -198,15 +200,15 @@ public class SequenceTreeView : NodesWindow
             node.ParentId = selection.id;
             (selection.data as Internal).childrenIds.Add(id);
             var newItem = new TreeViewItemData<INode>(id, node);
-            m_TreeView.AddItem(newItem, parentId: selection.id, rebuildTree: true);
-            m_TreeView.ExpandItem(selection.id);
+            _treeView.AddItem(newItem, parentId: selection.id, rebuildTree: true);
+            _treeView.ExpandItem(selection.id);
         }
     }
 
     private void SaveSequenceTreeAsJson()
     {
         Debug.Log("Saving Sequence Tree...");
-        var root = m_TreeView.GetItemDataForId<INode>(m_RootId);
+        var root = _treeView.GetItemDataForId<INode>(_rootId);
 
         JsonEcaTree jsonSequenceTree = ParseJsonTree(root);
 
@@ -217,9 +219,19 @@ public class SequenceTreeView : NodesWindow
 
         File.WriteAllText(uniqueFileName, jsonTree);
         string fileName = uniqueFileName.Split("/").Last();
+
+        ShowOkMessage(fileName);
+
         Debug.Log($"{fileName} Generated!");
 
     }
+
+    void ShowOkMessage(string fileName)
+    {
+        _exportMessage.text = $"{fileName} Generated!";
+        _exportMessage.style.display = DisplayStyle.Flex;
+    }
+
     private JsonEcaTree ParseJsonTree(INode root)
     {
         var jsonTree = new JsonEcaTree();
@@ -238,7 +250,7 @@ public class SequenceTreeView : NodesWindow
         }
         foreach(int id in (node as Internal).childrenIds)
         {
-            var child = m_TreeView.GetItemDataForId<INode>(id);
+            var child = _treeView.GetItemDataForId<INode>(id);
             
             if (child.IsLeaf() && (child as Leaf).Rule == null) 
                 continue;
